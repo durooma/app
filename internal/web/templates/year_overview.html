@@ -1,0 +1,58 @@
+{{define "content"}}
+<div class="page-head">
+	<h1>Year overview — {{.Year}}</h1>
+	<form method="get" action="/reports/year-overview" class="inline">
+		<select name="year" onchange="this.form.submit()">
+			{{$cur := .Year}}
+			{{range .Years}}<option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{.}}</option>{{end}}
+			{{if not .Years}}<option value="{{.Year}}" selected>{{.Year}}</option>{{end}}
+		</select>
+	</form>
+</div>
+
+<p class="muted">Every category across all 12 months. Amounts spread across a range
+(quarter, year, …) are amortized into each month automatically.</p>
+
+<div class="table-scroll">
+<table class="grid">
+	<thead>
+		<tr>
+			<th class="sticky-col">Category</th>
+			{{range seq 1 12}}<th class="num">{{month .}}</th>{{end}}
+			<th class="num total-col">Total</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{range .Rows}}
+		<tr>
+			<td class="sticky-col">{{.Category}}</td>
+			{{$row := .}}
+			{{range seq 1 12}}
+				{{$v := index $row.Months .}}
+				<td class="num {{signclass $v}}">{{if $v}}{{money $v}}{{end}}</td>
+			{{end}}
+			<td class="num total-col {{signclass .Total}}">{{money .Total}}</td>
+		</tr>
+		{{end}}
+		{{if not .Rows}}<tr><td colspan="14" class="muted">No data for {{.Year}}.</td></tr>{{end}}
+	</tbody>
+	<tfoot>
+		<tr class="foot-income">
+			<td class="sticky-col">Income</td>
+			{{range .Months}}<td class="num pos">{{if .Income}}{{money .Income}}{{end}}</td>{{end}}
+			<td class="num total-col pos"></td>
+		</tr>
+		<tr class="foot-expense">
+			<td class="sticky-col">Expenses</td>
+			{{range .Months}}<td class="num neg">{{if .Expense}}{{money .Expense}}{{end}}</td>{{end}}
+			<td class="num total-col neg"></td>
+		</tr>
+		<tr class="foot-net">
+			<td class="sticky-col">Net</td>
+			{{range .Months}}<td class="num {{signclass .Net}}">{{if .Net}}{{money .Net}}{{end}}</td>{{end}}
+			<td class="num total-col"></td>
+		</tr>
+	</tfoot>
+</table>
+</div>
+{{end}}

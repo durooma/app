@@ -1,0 +1,77 @@
+{{define "content"}}
+<div class="page-head"><h1>Transactions</h1></div>
+
+<form method="get" action="/transactions" class="filters">
+	{{$f := .Filter}}
+	<select name="institution_id">
+		<option value="0">All institutions</option>
+		{{range .Institutions}}<option value="{{.ID}}" {{if eq .ID (index $f "institution_id")}}selected{{end}}>{{.Name}}</option>{{end}}
+	</select>
+	<select name="account_id">
+		<option value="0">All accounts</option>
+		{{range .Accounts}}<option value="{{.ID}}" {{if eq .ID (index $f "account_id")}}selected{{end}}>{{.InstitutionName}} · {{.Name}} ({{.Currency}})</option>{{end}}
+	</select>
+	<select name="category_id">
+		<option value="0">All categories</option>
+		{{range .Categories}}<option value="{{.ID}}" {{if eq .ID (index $f "category_id")}}selected{{end}}>{{.Name}}</option>{{end}}
+	</select>
+	<label class="chk"><input type="checkbox" name="uncategorized" value="1" {{if index $f "uncategorized"}}checked{{end}}> Uncategorized</label>
+	<input type="date" name="from" value="{{index $f "from"}}">
+	<input type="date" name="to" value="{{index $f "to"}}">
+	<input type="search" name="q" placeholder="Search description" value="{{index $f "q"}}">
+	<button type="submit">Filter</button>
+	<a href="/transactions" class="btn-link">Reset</a>
+</form>
+
+<p class="muted">{{len .Transactions}} shown · net {{money .Total}} {{.BaseCurrency}}</p>
+
+<div class="table-scroll">
+<table class="txns">
+	<thead>
+		<tr>
+			<th>Date</th><th>Account</th><th>Description</th>
+			<th class="num">Amount</th><th class="num">{{.BaseCurrency}}</th>
+			<th>Category</th><th>Month(s)</th><th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{{$cats := .Categories}}
+		{{range .Transactions}}
+		<tr>
+			<td class="nowrap">{{date .Date}}</td>
+			<td class="nowrap"><span class="pill">{{.Institution}}</span> {{.AccountName}}</td>
+			<td>{{.Description}}{{if .Note}}<br><small class="muted">{{.Note}}</small>{{end}}</td>
+			<td class="num nowrap">{{money .Amount}} {{.Currency}}</td>
+			<td class="num nowrap {{signclass .BaseAmount}}">{{money .BaseAmount}}</td>
+			<td>
+				<select name="category_id" hx-post="/transactions/{{.ID}}/category" hx-swap="none" hx-trigger="change">
+					<option value="0">—</option>
+					{{$tx := .}}
+					{{range $cats}}<option value="{{.ID}}" {{if eq .ID $tx.CatID}}selected{{end}}>{{.Name}}</option>{{end}}
+				</select>
+			</td>
+			<td class="nowrap">
+				<form method="post" action="/transactions/{{.ID}}/months" class="months">
+					<input type="month" name="start_month" value="{{monthval .StartMonth}}">
+					<input type="month" name="end_month" value="{{monthval .EndMonth}}">
+					<button type="submit" title="Assign to this month or range">✓</button>
+					{{if .Amortized}}<span class="pill amort" title="Amortized over {{.MonthSpan}} months">÷{{.MonthSpan}}</span>{{end}}
+				</form>
+			</td>
+			<td>
+				<button class="del" hx-post="/transactions/{{.ID}}/delete"
+					hx-target="closest tr" hx-swap="outerHTML"
+					hx-confirm="Delete this transaction?">✕</button>
+			</td>
+		</tr>
+		{{end}}
+		{{if not .Transactions}}<tr><td colspan="8" class="muted">No transactions match. Try <a href="/import">importing</a> some.</td></tr>{{end}}
+	</tbody>
+</table>
+</div>
+
+<div class="pager">
+	{{if gt .Page 1}}<a href="?page={{add .Page -1}}">← Newer</a>{{end}}
+	{{if .HasMore}}<a href="?page={{add .Page 1}}">Older →</a>{{end}}
+</div>
+{{end}}

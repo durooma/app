@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: durooma
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-durooma}
+      POSTGRES_DB: durooma
+    # Tuned to be gentle on a 512 MB host.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - max_connections=20
+      - -c
+      - effective_cache_size=128MB
+      - -c
+      - work_mem=4MB
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U durooma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Hard memory ceiling so Postgres can never starve the app.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://durooma:${POSTGRES_PASSWORD:-durooma}@db:5432/durooma?sslmode=disable
+      HTTP_ADDR: ":8080"
+      BASE_CURRENCY: ${BASE_CURRENCY:-CHF}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
+      AI_MODEL: ${AI_MODEL:-gemini-3.1-flash-lite}
+      AI_API_KEY: ${AI_API_KEY:-}
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  db-data:

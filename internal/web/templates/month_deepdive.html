@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="page-head">
+	<h1>Monthly deep dive — {{month .Month}} {{.Year}}</h1>
+	<form method="get" action="/reports/month" class="inline">
+		<select name="year" onchange="this.form.submit()">
+			{{$cur := .Year}}
+			{{range .Years}}<option value="{{.}}" {{if eq . $cur}}selected{{end}}>{{.}}</option>{{end}}
+			{{if not .Years}}<option value="{{.Year}}" selected>{{.Year}}</option>{{end}}
+		</select>
+		<select name="month" onchange="this.form.submit()">
+			{{$m := .Month}}
+			{{range seq 1 12}}<option value="{{.}}" {{if eq . $m}}selected{{end}}>{{month .}}</option>{{end}}
+		</select>
+	</form>
+</div>
+
+<div class="cards">
+	<div class="card pos"><span>Income</span><strong>{{money .IncomeSum}}</strong></div>
+	<div class="card neg"><span>Expenses</span><strong>{{money .ExpenseSum}}</strong></div>
+	<div class="card"><span>Net</span><strong class="{{signclass .Net}}">{{money .Net}}</strong></div>
+</div>
+
+<div class="two-col">
+	<section>
+		<h2>Income by category</h2>
+		<table class="list">
+			<tbody>
+			{{range .Income}}<tr><td>{{.CategoryName}}</td><td class="num pos">{{money .Amount}}</td></tr>{{end}}
+			{{if not .Income}}<tr><td class="muted" colspan="2">No income recorded.</td></tr>{{end}}
+			</tbody>
+		</table>
+	</section>
+	<section>
+		<h2>Expenses by category</h2>
+		<table class="list">
+			<tbody>
+			{{range .Expense}}<tr><td>{{.CategoryName}}</td><td class="num neg">{{money .Amount}}</td></tr>{{end}}
+			{{if not .Expense}}<tr><td class="muted" colspan="2">No expenses recorded.</td></tr>{{end}}
+			</tbody>
+		</table>
+	</section>
+</div>
+{{end}}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{.Title}} · Durooma</title>
+	<link rel="stylesheet" href="/static/app.css">
+	<script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+	<a class="brand" href="/">💰 Durooma</a>
+	<nav>
+		{{$nav := .Nav}}
+		<a href="/reports/year-overview?year={{.CurrentYear}}" class="{{if eq $nav "overview"}}active{{end}}">Year overview</a>
+		<a href="/reports/year?year={{.CurrentYear}}" class="{{if eq $nav "year"}}active{{end}}">Yearly</a>
+		<a href="/reports/month?year={{.CurrentYear}}" class="{{if eq $nav "month"}}active{{end}}">Monthly</a>
+		<a href="/reports/years" class="{{if eq $nav "years"}}active{{end}}">Multi-year</a>
+		<a href="/transactions" class="{{if eq $nav "transactions"}}active{{end}}">Transactions</a>
+		<a href="/categories" class="{{if eq $nav "categories"}}active{{end}}">Categories</a>
+		<a href="/rules" class="{{if eq $nav "rules"}}active{{end}}">Rules</a>
+		<a href="/accounts" class="{{if eq $nav "accounts"}}active{{end}}">Accounts</a>
+		<a href="/import" class="{{if eq $nav "import"}}active{{end}}">Import</a>
+	</nav>
+	<span class="base-ccy">{{.BaseCurrency}}</span>
+</header>
+<main>
+	{{template "content" .}}
+</main>
+</body>
+</html>

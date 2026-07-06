@@ -1,0 +1,23 @@
+{{define "content"}}
+<div class="page-head"><h1>Accounts</h1></div>
+<p class="muted">Accounts are also created automatically on import. Each account
+belongs to an institution and has its own currency.</p>
+
+<table class="list">
+	<thead><tr><th>Institution</th><th>Account</th><th>Currency</th></tr></thead>
+	<tbody>
+		{{range .Accounts}}
+		<tr><td>{{.InstitutionName}}</td><td>{{.Name}}</td><td>{{.Currency}}</td></tr>
+		{{end}}
+		{{if not .Accounts}}<tr><td colspan="3" class="muted">No accounts yet.</td></tr>{{end}}
+	</tbody>
+</table>
+
+<h2>Add account</h2>
+<form method="post" action="/accounts" class="row-form">
+	<input name="institution" placeholder="Institution (e.g. UBS)" required>
+	<input name="name" placeholder="Account name" required>
+	<input name="currency" placeholder="CHF" maxlength="3" class="tiny" required>
+	<button type="submit">Add</button>
+</form>
+{{end}}

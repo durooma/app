@@ -1,0 +1,46 @@
+{{define "content"}}
+<div class="page-head"><h1>Categories</h1></div>
+<p class="muted">Edit names, descriptions and type. Descriptions are also used as
+context for the AI categorizer.</p>
+
+<table class="editable">
+	<thead><tr><th>Name</th><th>Description</th><th>Type</th><th class="num">Sort</th><th></th></tr></thead>
+	<tbody>
+		{{range .Categories}}
+		<tr>
+			<td>
+				<form id="cat-{{.ID}}" method="post" action="/categories/{{.ID}}"></form>
+				<input form="cat-{{.ID}}" name="name" value="{{.Name}}" required>
+			</td>
+			<td><input form="cat-{{.ID}}" name="description" value="{{.Description}}" class="wide"></td>
+			<td>
+				<select form="cat-{{.ID}}" name="kind">
+					<option value="" {{if eq .Kind ""}}selected{{end}}>—</option>
+					<option value="income" {{if eq .Kind "income"}}selected{{end}}>Income</option>
+					<option value="expense" {{if eq .Kind "expense"}}selected{{end}}>Expense</option>
+				</select>
+			</td>
+			<td class="num"><input form="cat-{{.ID}}" name="sort_order" type="number" value="{{.SortOrder}}" class="tiny"></td>
+			<td class="nowrap">
+				<button form="cat-{{.ID}}" type="submit">Save</button>
+				<button form="cat-{{.ID}}" type="submit" formaction="/categories/{{.ID}}/delete" class="del"
+					onclick="return confirm('Delete category {{.Name}}?')">Delete</button>
+			</td>
+		</tr>
+		{{end}}
+	</tbody>
+</table>
+
+<h2>Add category</h2>
+<form method="post" action="/categories" class="row-form">
+	<input name="name" placeholder="Name" required>
+	<input name="description" placeholder="Description" class="wide">
+	<select name="kind">
+		<option value="">—</option>
+		<option value="income">Income</option>
+		<option value="expense">Expense</option>
+	</select>
+	<input name="sort_order" type="number" placeholder="Sort" class="tiny" value="500">
+	<button type="submit">Add</button>
+</form>
+{{end}}

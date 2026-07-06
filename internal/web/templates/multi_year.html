@@ -1,0 +1,41 @@
+{{define "content"}}
+<div class="page-head"><h1>Multi-year overview</h1></div>
+
+<section>
+	<h2>Income, expenses & net by year</h2>
+	<table class="grid">
+		<thead><tr><th></th>{{range .YearTotals}}<th class="num">{{.Year}}</th>{{end}}</tr></thead>
+		<tbody>
+			<tr><td>Income</td>{{range .YearTotals}}<td class="num pos">{{money .Income}}</td>{{end}}</tr>
+			<tr><td>Expenses</td>{{range .YearTotals}}<td class="num neg">{{money .Expense}}</td>{{end}}</tr>
+			<tr><td>Net</td>{{range .YearTotals}}<td class="num {{signclass .Net}}">{{money .Net}}</td>{{end}}</tr>
+		</tbody>
+	</table>
+</section>
+
+<section>
+	<h2>Categories across years</h2>
+	<div class="table-scroll">
+	<table class="grid">
+		<thead>
+			<tr><th class="sticky-col">Category</th>{{range .Years}}<th class="num">{{.}}</th>{{end}}<th class="num total-col">Total</th></tr>
+		</thead>
+		<tbody>
+			{{$years := .Years}}
+			{{range .Rows}}
+			<tr>
+				<td class="sticky-col">{{.Category}}</td>
+				{{$row := .}}
+				{{range $years}}
+					{{$v := index $row.ByYear .}}
+					<td class="num {{signclass $v}}">{{if $v}}{{money $v}}{{end}}</td>
+				{{end}}
+				<td class="num total-col {{signclass .Total}}">{{money .Total}}</td>
+			</tr>
+			{{end}}
+			{{if not .Rows}}<tr><td class="muted" colspan="99">No data yet.</td></tr>{{end}}
+		</tbody>
+	</table>
+	</div>
+</section>
+{{end}}

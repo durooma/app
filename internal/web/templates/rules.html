@@ -1,0 +1,35 @@
+{{define "content"}}
+<div class="page-head"><h1>Categorization rules</h1></div>
+<p class="muted">If a transaction description contains a pattern, it gets that
+category automatically — before the AI is consulted. Higher priority wins.</p>
+
+<table class="list">
+	<thead><tr><th>Pattern (contains)</th><th>Category</th><th class="num">Priority</th><th></th></tr></thead>
+	<tbody>
+		{{range .Rules}}
+		<tr>
+			<td><code>{{.Pattern}}</code></td>
+			<td>{{.CategoryName}}</td>
+			<td class="num">{{.Priority}}</td>
+			<td>
+				<form method="post" action="/rules/{{.ID}}/delete">
+					<button type="submit" class="del">Delete</button>
+				</form>
+			</td>
+		</tr>
+		{{end}}
+		{{if not .Rules}}<tr><td colspan="4" class="muted">No rules yet.</td></tr>{{end}}
+	</tbody>
+</table>
+
+<h2>Add rule</h2>
+<form method="post" action="/rules" class="row-form">
+	<input name="pattern" placeholder="e.g. MIGROS" required>
+	<select name="category_id" required>
+		<option value="">Category…</option>
+		{{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+	</select>
+	<input name="priority" type="number" placeholder="Priority" class="tiny" value="0">
+	<button type="submit">Add</button>
+</form>
+{{end}}
