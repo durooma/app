@@ -71,12 +71,45 @@ func (t Transaction) CatID() int64 {
 // Amortized reports whether the transaction spans more than one month.
 func (t Transaction) Amortized() bool { return t.MonthSpan() > 1 }
 
+// AllocatedFor returns the portion of BaseAmount that falls within the inclusive
+// [start,end] month window — the per-period share used by the amortizing reports.
+// For a single-month transaction (or a period covering its whole window) this is
+// the full BaseAmount; for a transaction spread across N months it is
+// BaseAmount/N times the number of its months inside the period.
+func (t Transaction) AllocatedFor(start, end time.Time) float64 {
+	o := overlapMonths(t.StartMonth, t.EndMonth, start, end)
+	if o == 0 {
+		return 0
+	}
+	return t.BaseAmount / float64(t.MonthSpan()) * float64(o)
+}
+
 func monthsBetween(start, end time.Time) int {
 	m := (end.Year()-start.Year())*12 + int(end.Month()) - int(start.Month()) + 1
 	if m < 1 {
 		return 1
 	}
 	return m
+}
+
+// monthIndex maps a date to a monotonic month number for range arithmetic.
+func monthIndex(t time.Time) int { return t.Year()*12 + int(t.Month()) - 1 }
+
+// overlapMonths returns the count of inclusive months shared by the two month
+// windows [aStart,aEnd] and [bStart,bEnd] (0 if they don't overlap).
+func overlapMonths(aStart, aEnd, bStart, bEnd time.Time) int {
+	lo := monthIndex(aStart)
+	if s := monthIndex(bStart); s > lo {
+		lo = s
+	}
+	hi := monthIndex(aEnd)
+	if e := monthIndex(bEnd); e < hi {
+		hi = e
+	}
+	if hi < lo {
+		return 0
+	}
+	return hi - lo + 1
 }
 
 // CategoryTotal is a per-category aggregate used by the deep-dive reports.

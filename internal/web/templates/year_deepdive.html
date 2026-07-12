@@ -11,9 +11,9 @@
 </div>
 
 <div class="cards">
-	<div class="card pos"><span>Income</span><strong>{{money .IncomeSum}}</strong></div>
-	<div class="card neg"><span>Expenses</span><strong>{{money .ExpenseSum}}</strong></div>
-	<div class="card"><span>Net</span><strong class="{{signclass .Net}}">{{money .Net}}</strong></div>
+	<div class="card pos"><span>Income</span><strong><a class="drill" href="/transactions?period={{.Year}}&sign=income">{{money .IncomeSum}}</a></strong></div>
+	<div class="card neg"><span>Expenses</span><strong><a class="drill" href="/transactions?period={{.Year}}&sign=expense">{{money .ExpenseSum}}</a></strong></div>
+	<div class="card"><span>Net</span><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{.Year}}">{{money .Net}}</a></strong></div>
 </div>
 
 <div class="two-col">
@@ -23,7 +23,7 @@
 			<tbody>
 			{{range .Income}}
 				<tr>
-					<td><a href="/transactions?category_id={{if .CategoryID}}{{.CategoryID}}{{end}}&from={{$.Year}}-01-01&to={{$.Year}}-12-31">{{.CategoryName}}</a></td>
+					<td><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$.Year}}">{{.CategoryName}}</a></td>
 					<td class="num pos">{{money .Amount}}</td>
 				</tr>
 			{{end}}
@@ -37,7 +37,7 @@
 			<tbody>
 			{{range .Expense}}
 				<tr>
-					<td><a href="/transactions?category_id={{if .CategoryID}}{{.CategoryID}}{{end}}&from={{$.Year}}-01-01&to={{$.Year}}-12-31">{{.CategoryName}}</a></td>
+					<td><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$.Year}}">{{.CategoryName}}</a></td>
 					<td class="num neg">{{money .Amount}}</td>
 				</tr>
 			{{end}}
@@ -52,9 +52,9 @@
 	<table class="grid">
 		<thead><tr><th></th>{{range .Months}}<th class="num">{{month .Month}}</th>{{end}}</tr></thead>
 		<tbody>
-			<tr><td>Income</td>{{range .Months}}<td class="num pos">{{if .Income}}{{money .Income}}{{end}}</td>{{end}}</tr>
-			<tr><td>Expenses</td>{{range .Months}}<td class="num neg">{{if .Expense}}{{money .Expense}}{{end}}</td>{{end}}</tr>
-			<tr><td>Net</td>{{range .Months}}<td class="num {{signclass .Net}}">{{if .Net}}{{money .Net}}{{end}}</td>{{end}}</tr>
+			<tr><td>Income</td>{{range .Months}}<td class="num pos">{{if .Income}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}&sign=income">{{money .Income}}</a>{{end}}</td>{{end}}</tr>
+			<tr><td>Expenses</td>{{range .Months}}<td class="num neg">{{if .Expense}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}&sign=expense">{{money .Expense}}</a>{{end}}</td>{{end}}</tr>
+			<tr><td>Net</td>{{range .Months}}<td class="num {{signclass .Net}}">{{if .Net}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}">{{money .Net}}</a>{{end}}</td>{{end}}</tr>
 		</tbody>
 	</table>
 	<p class="muted">Tip: open the <a href="/reports/month?year={{.Year}}&month=1">monthly deep dive</a> for a single month.</p>

@@ -34,7 +34,6 @@ type Provider interface {
 type storeIface interface {
 	ListCategories(ctx context.Context) ([]models.Category, error)
 	ListRules(ctx context.Context) ([]models.Rule, error)
-	UncategorizedForAI(ctx context.Context, limit int) ([]models.Transaction, error)
 	UpdateTransactionCategory(ctx context.Context, id int64, categoryID *int64) error
 }
 
@@ -61,9 +60,24 @@ const (
 	maxPerRun      = 500
 )
 
-// Categorize applies rules first, then the AI provider, writing results back.
-func (s *Service) Categorize(ctx context.Context) (Report, error) {
+// Categorize applies rules first, then the AI provider, to the supplied
+// transactions, writing results back. Transactions that already have a category
+// are skipped so existing (possibly hand-picked) categorizations are never
+// overwritten. At most maxPerRun transactions are processed per call.
+func (s *Service) Categorize(ctx context.Context, txns []models.Transaction) (Report, error) {
 	rep := Report{Provider: s.provider.Name()}
+
+	// Never touch transactions that already have a category.
+	var pending []models.Transaction
+	for _, t := range txns {
+		if t.CategoryID == nil {
+			pending = append(pending, t)
+		}
+	}
+	if len(pending) > maxPerRun {
+		pending = pending[:maxPerRun]
+	}
+	txns = pending
 
 	cats, err := s.store.ListCategories(ctx)
 	if err != nil {
@@ -89,10 +103,6 @@ func (s *Service) Categorize(ctx context.Context) (Report, error) {
 		return rep, err
 	}
 
-	txns, err := s.store.UncategorizedForAI(ctx, maxPerRun)
-	if err != nil {
-		return rep, err
-	}
 	rep.Total = len(txns)
 
 	// Pass 1: substring rules.

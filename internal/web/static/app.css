@@ -91,6 +91,9 @@ tfoot td { font-weight: 600; background: var(--panel-2); border-top: 2px solid v
 .months { display: flex; align-items: center; gap: 3px; }
 .del { color: var(--neg); background: none; border: 1px solid transparent; cursor: pointer; }
 .del:hover { border-color: var(--neg); border-radius: 4px; }
+.auto-cat { background: none; border: 1px solid transparent; cursor: pointer; padding: 2px 4px; }
+.auto-cat:hover { border-color: var(--accent); border-radius: 4px; }
+.page-head form.inline { margin-left: auto; }
 
 /* Forms */
 input, select, button, textarea {
@@ -112,6 +115,25 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .stack label { display: flex; flex-direction: column; gap: 4px; }
 .editable input, .editable select { width: 100%; }
 .editable td form { display: none; }
+
+/* Drill-down: numbers and cards link into the filtered transactions view while
+   keeping their sign colour; only hint interactivity on hover. */
+a.drill { color: inherit; text-decoration: none; }
+a.drill:hover { text-decoration: underline; text-underline-offset: 2px; }
+.list td a, .sticky-col a { color: inherit; }
+.list td a:hover, .sticky-col a:hover { color: var(--accent); text-decoration: underline; }
+.card strong a { color: inherit; }
+.card:has(a):hover { border-color: var(--accent); }
+
+.drill-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; }
+.chip {
+	display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px;
+	border-radius: 12px; font-size: 12px; font-weight: 600;
+	background: var(--panel-2); border: 1px solid var(--accent); color: var(--text);
+}
+.chip-x { color: var(--muted); font-weight: 700; line-height: 1; }
+.chip-x:hover { color: var(--neg); text-decoration: none; }
+.drill-share { display: inline-block; margin-top: 2px; font-size: 11px; }
 
 .pager { display: flex; gap: 16px; margin: 16px 0; }
 .alert { padding: 12px 16px; border-radius: var(--radius); margin: 12px 0; border: 1px solid var(--border); }

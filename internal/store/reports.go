@@ -168,28 +168,31 @@ func (s *Store) YearMatrix(ctx context.Context, year int) ([]models.MonthCategor
 // cross-category comparison.
 func (s *Store) CategoryMatrixForYears(ctx context.Context) ([]struct {
 	Year         int
+	CategoryID   *int64
 	CategoryName string
 	Amount       float64
 }, error) {
 	rows, err := s.pool.Query(ctx, allocCTE+`
-		SELECT EXTRACT(YEAR FROM month)::int AS y, category_name, SUM(amount)
-		FROM alloc GROUP BY y, category_name ORDER BY category_name, y`)
+		SELECT EXTRACT(YEAR FROM month)::int AS y, category_id, category_name, SUM(amount)
+		FROM alloc GROUP BY y, category_id, category_name ORDER BY category_name, y`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	var out []struct {
 		Year         int
+		CategoryID   *int64
 		CategoryName string
 		Amount       float64
 	}
 	for rows.Next() {
 		var r struct {
 			Year         int
+			CategoryID   *int64
 			CategoryName string
 			Amount       float64
 		}
-		if err := rows.Scan(&r.Year, &r.CategoryName, &r.Amount); err != nil {
+		if err := rows.Scan(&r.Year, &r.CategoryID, &r.CategoryName, &r.Amount); err != nil {
 			return nil, err
 		}
 		out = append(out, r)

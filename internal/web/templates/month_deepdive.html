@@ -14,10 +14,11 @@
 	</form>
 </div>
 
+{{$p := printf "%d-%02d" .Year .Month}}
 <div class="cards">
-	<div class="card pos"><span>Income</span><strong>{{money .IncomeSum}}</strong></div>
-	<div class="card neg"><span>Expenses</span><strong>{{money .ExpenseSum}}</strong></div>
-	<div class="card"><span>Net</span><strong class="{{signclass .Net}}">{{money .Net}}</strong></div>
+	<div class="card pos"><span>Income</span><strong><a class="drill" href="/transactions?period={{$p}}&sign=income">{{money .IncomeSum}}</a></strong></div>
+	<div class="card neg"><span>Expenses</span><strong><a class="drill" href="/transactions?period={{$p}}&sign=expense">{{money .ExpenseSum}}</a></strong></div>
+	<div class="card"><span>Net</span><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{$p}}">{{money .Net}}</a></strong></div>
 </div>
 
 <div class="two-col">
@@ -25,7 +26,7 @@
 		<h2>Income by category</h2>
 		<table class="list">
 			<tbody>
-			{{range .Income}}<tr><td>{{.CategoryName}}</td><td class="num pos">{{money .Amount}}</td></tr>{{end}}
+			{{range .Income}}<tr><td><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p}}">{{.CategoryName}}</a></td><td class="num pos">{{money .Amount}}</td></tr>{{end}}
 			{{if not .Income}}<tr><td class="muted" colspan="2">No income recorded.</td></tr>{{end}}
 			</tbody>
 		</table>
@@ -34,7 +35,7 @@
 		<h2>Expenses by category</h2>
 		<table class="list">
 			<tbody>
-			{{range .Expense}}<tr><td>{{.CategoryName}}</td><td class="num neg">{{money .Amount}}</td></tr>{{end}}
+			{{range .Expense}}<tr><td><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p}}">{{.CategoryName}}</a></td><td class="num neg">{{money .Amount}}</td></tr>{{end}}
 			{{if not .Expense}}<tr><td class="muted" colspan="2">No expenses recorded.</td></tr>{{end}}
 			</tbody>
 		</table>

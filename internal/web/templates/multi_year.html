@@ -6,9 +6,9 @@
 	<table class="grid">
 		<thead><tr><th></th>{{range .YearTotals}}<th class="num">{{.Year}}</th>{{end}}</tr></thead>
 		<tbody>
-			<tr><td>Income</td>{{range .YearTotals}}<td class="num pos">{{money .Income}}</td>{{end}}</tr>
-			<tr><td>Expenses</td>{{range .YearTotals}}<td class="num neg">{{money .Expense}}</td>{{end}}</tr>
-			<tr><td>Net</td>{{range .YearTotals}}<td class="num {{signclass .Net}}">{{money .Net}}</td>{{end}}</tr>
+			<tr><td>Income</td>{{range .YearTotals}}<td class="num pos"><a class="drill" href="/transactions?period={{.Year}}&sign=income">{{money .Income}}</a></td>{{end}}</tr>
+			<tr><td>Expenses</td>{{range .YearTotals}}<td class="num neg"><a class="drill" href="/transactions?period={{.Year}}&sign=expense">{{money .Expense}}</a></td>{{end}}</tr>
+			<tr><td>Net</td>{{range .YearTotals}}<td class="num {{signclass .Net}}"><a class="drill" href="/transactions?period={{.Year}}">{{money .Net}}</a></td>{{end}}</tr>
 		</tbody>
 	</table>
 </section>
@@ -23,14 +23,14 @@
 		<tbody>
 			{{$years := .Years}}
 			{{range .Rows}}
+			{{$row := .}}
 			<tr>
-				<td class="sticky-col">{{.Category}}</td>
-				{{$row := .}}
+				<td class="sticky-col"><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}">{{.Category}}</a></td>
 				{{range $years}}
 					{{$v := index $row.ByYear .}}
-					<td class="num {{signclass $v}}">{{if $v}}{{money $v}}{{end}}</td>
+					<td class="num {{signclass $v}}">{{if $v}}<a class="drill" href="/transactions?{{if $row.CategoryID}}category_id={{$row.CategoryID}}{{else}}uncategorized=1{{end}}&period={{.}}">{{money $v}}</a>{{end}}</td>
 				{{end}}
-				<td class="num total-col {{signclass .Total}}">{{money .Total}}</td>
+				<td class="num total-col {{signclass .Total}}"><a class="drill" href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}">{{money .Total}}</a></td>
 			</tr>
 			{{end}}
 			{{if not .Rows}}<tr><td class="muted" colspan="99">No data yet.</td></tr>{{end}}

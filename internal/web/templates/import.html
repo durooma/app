@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="page-head"><h1>Import & categorize</h1></div>
+<div class="page-head"><h1>Import a statement</h1></div>
 
 {{if .Error}}<div class="alert error">{{.Error}}</div>{{end}}
 
@@ -13,15 +13,7 @@
 </div>
 {{end}}
 
-{{with .Report}}
-<div class="alert ok">
-	Categorized {{.Total}} transactions with <strong>{{.Provider}}</strong> —
-	{{.ByRules}} by rules, {{.ByAI}} by AI, {{.Unresolved}} left unresolved.
-</div>
-{{end}}
-
 <section>
-	<h2>1. Import a statement</h2>
 	<form method="post" action="/import" enctype="multipart/form-data" class="stack">
 		<label>Provider
 			<select name="provider" required>
@@ -39,15 +31,7 @@
 	</form>
 	<p class="muted">Foreign-currency amounts are converted to {{.BaseCurrency}} using
 	historical ECB rates. Duplicate rows (same date, description and amount) are skipped.</p>
-</section>
-
-<section>
-	<h2>2. Auto-categorize</h2>
-	<p class="muted">Runs your rules first, then delegates the rest to
-	{{if eq .AIProvider "none"}}the AI provider (currently disabled){{else}}<strong>{{.AIProvider}}</strong>{{end}}.
-	Only uncategorized transactions are touched.</p>
-	<form method="post" action="/categorize">
-		<button type="submit" {{if eq .AIProvider "none"}}disabled{{end}}>Run categorization</button>
-	</form>
+	<p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
+	to auto-categorize with ✨ <strong>Categorize all</strong>.</p>
 </section>
 {{end}}

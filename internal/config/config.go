@@ -40,6 +40,11 @@ func Load() (*Config, error) {
 	return c, nil
 }
 
+// AIEnabled reports whether an AI categorization provider is configured.
+func (c *Config) AIEnabled() bool {
+	return c.AIProvider != "" && c.AIProvider != "none"
+}
+
 func env(key, def string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
 		return v

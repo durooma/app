@@ -4,14 +4,15 @@ import (
 	"net/http"
 	"time"
 
+	"durooma/internal/models"
 	"durooma/internal/store"
 )
 
 const pageSize = 200
 
-func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
+// txnFilterFromRequest builds a paged transaction filter from the request's
+// query/form values.
+func txnFilterFromRequest(r *http.Request) store.TxnFilter {
 	f := store.TxnFilter{
 		AccountID:     int64(intParam(r, "account_id", 0)),
 		InstitutionID: int64(intParam(r, "institution_id", 0)),
@@ -31,11 +32,40 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 			f.To = t
 		}
 	}
+	f.PeriodStart, f.PeriodEnd = parsePeriod(r.FormValue("period"))
+	switch r.FormValue("sign") {
+	case "income", "expense":
+		f.Sign = r.FormValue("sign")
+	}
+	return f
+}
 
+// parsePeriod interprets a drill-down period param as either a single month
+// ("2006-01") or a whole year ("2006"), returning the inclusive first-of-month
+// bounds. A blank/invalid value yields zero times (no period filter).
+func parsePeriod(v string) (start, end time.Time) {
+	if v == "" {
+		return
+	}
+	if t, err := time.Parse("2006-01", v); err == nil {
+		s := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return s, s
+	}
+	if t, err := time.Parse("2006", v); err == nil {
+		return time.Date(t.Year(), 1, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(t.Year(), 12, 1, 0, 0, 0, 0, time.UTC)
+	}
+	return
+}
+
+// transactionsData runs the current filter and assembles the template data for
+// the transactions page. Callers may add extra keys (e.g. a categorization
+// Report) before rendering.
+func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[string]any, error) {
+	ctx := r.Context()
 	txns, err := s.store.ListTransactions(ctx, f)
 	if err != nil {
-		s.fail(w, err)
-		return
+		return nil, err
 	}
 	accounts, _ := s.store.ListAccounts(ctx)
 	institutions, _ := s.store.ListInstitutions(ctx)
@@ -62,8 +92,101 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 		"q":              f.Search,
 		"from":           r.FormValue("from"),
 		"to":             r.FormValue("to"),
+		"period":         r.FormValue("period"),
+		"sign":           r.FormValue("sign"),
+	}
+	data["AIEnabled"] = s.cfg.AIEnabled()
+
+	// When drilling into a period, expose each transaction's amortized share of
+	// that period so amortized rows can show it alongside the full amount. The
+	// sum of shares reconciles with the report figure that was clicked.
+	if !f.PeriodStart.IsZero() && !f.PeriodEnd.IsZero() {
+		alloc := make(map[int64]float64, len(txns))
+		var allocTotal float64
+		for _, t := range txns {
+			share := t.AllocatedFor(f.PeriodStart, f.PeriodEnd)
+			alloc[t.ID] = share
+			allocTotal += share
+		}
+		data["PeriodActive"] = true
+		data["Alloc"] = alloc
+		data["AllocTotal"] = allocTotal
+	}
+	return data, nil
+}
+
+func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
+	data, err := s.transactionsData(r, txnFilterFromRequest(r))
+	if err != nil {
+		s.fail(w, err)
+		return
 	}
 	s.templates.render(w, "transactions", data)
+}
+
+// handleCategorizeAll auto-categorizes every uncategorized transaction matching
+// the current filter, then re-renders the page with a summary report. Existing
+// categorizations are left untouched by the AI service.
+func (s *Server) handleCategorizeAll(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Categorize across the whole matching set (not just the current page) but
+	// only the still-uncategorized ones.
+	catFilter := txnFilterFromRequest(r)
+	catFilter.Uncategorized = true
+	catFilter.Limit = 0
+	catFilter.Offset = 0
+
+	txns, err := s.store.ListTransactions(ctx, catFilter)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	report, err := s.ai.Categorize(ctx, txns)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+
+	data, err := s.transactionsData(r, txnFilterFromRequest(r))
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	data["Report"] = report
+	s.templates.render(w, "transactions", data)
+}
+
+// handleCategorizeOne auto-categorizes a single transaction (no-op if it is
+// already categorized) and returns the re-rendered row for an HTMX swap.
+func (s *Server) handleCategorizeOne(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id, err := int64PathValue(r, "id")
+	if err != nil {
+		http.Error(w, "bad id", http.StatusBadRequest)
+		return
+	}
+	txn, err := s.store.GetTransaction(ctx, id)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	if _, err := s.ai.Categorize(ctx, []models.Transaction{txn}); err != nil {
+		s.fail(w, err)
+		return
+	}
+	// Reload so the returned row reflects the freshly written category.
+	txn, err = s.store.GetTransaction(ctx, id)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	categories, _ := s.store.ListCategories(ctx)
+	s.templates.renderPartial(w, "transactions", "txn-row", map[string]any{
+		"T":         txn,
+		"Cats":      categories,
+		"AIEnabled": s.cfg.AIEnabled(),
+	})
 }
 
 func (s *Server) handleSetCategory(w http.ResponseWriter, r *http.Request) {
