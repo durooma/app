@@ -2,6 +2,7 @@ package web
 
 import (
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -77,5 +78,117 @@ func TestRenderAllPages(t *testing.T) {
 		if err := tmpls.pages[page].ExecuteTemplate(io.Discard, "layout.html", merge(extra)); err != nil {
 			t.Errorf("render %q: %v", page, err)
 		}
+	}
+}
+
+// TestReportDrillDownLinks checks that report figures render as links into the
+// transactions view, carrying the right period/sign, and that an uncategorized
+// total drills down via uncategorized=1 rather than an empty category_id.
+func TestReportDrillDownLinks(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cid := int64(3)
+	income := []models.CategoryTotal{{CategoryID: &cid, CategoryName: "Salary", Amount: 5000}}
+	expense := []models.CategoryTotal{{CategoryID: nil, CategoryName: "(uncategorized)", Amount: -800}}
+	data := map[string]any{
+		"Title": "T", "Nav": "month", "BaseCurrency": "CHF", "Years": []int{2024},
+		"CurrentYear": 2024, "AIProvider": "gemini",
+		"Year": 2024, "Month": 6, "Income": income, "Expense": expense,
+		"IncomeSum": 5000.0, "ExpenseSum": -800.0, "Net": 4200.0,
+	}
+	var buf strings.Builder
+	if err := tmpls.pages["month_deepdive"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+		t.Fatalf("render month_deepdive: %v", err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		"period=2024-06&sign=income",     // Income card
+		"period=2024-06&sign=expense",    // Expenses card
+		"category_id=3&period=2024-06",   // categorized row
+		"uncategorized=1&period=2024-06", // uncategorized row
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("month_deepdive missing drill-down link %q\n%s", want, out)
+		}
+	}
+}
+
+// TestRenderTransactionsPeriod exercises the drilled-in transactions view: the
+// per-row amortized share and the period-allocated total render without error.
+func TestRenderTransactionsPeriod(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cid := int64(3)
+	jan := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	dec := time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC)
+	amortized := models.Transaction{
+		ID: 9, AccountName: "Main", Institution: "UBS", Date: jan, Description: "Insurance",
+		Amount: -1200, Currency: "CHF", BaseAmount: -1200, CategoryID: &cid,
+		CategoryName: "Insurance", StartMonth: jan, EndMonth: dec,
+	}
+	data := map[string]any{
+		"Title": "T", "Nav": "transactions", "BaseCurrency": "CHF", "Years": []int{2024},
+		"CurrentYear": 2024, "AIProvider": "gemini",
+		"Transactions": []models.Transaction{amortized},
+		"Accounts":     []models.Account{}, "Institutions": []models.Institution{},
+		"Categories": []models.Category{{ID: 3, Name: "Insurance"}}, "Total": -1200.0,
+		"Page": 1, "HasMore": false,
+		"Filter": map[string]any{"account_id": int64(0), "institution_id": int64(0),
+			"category_id": int64(3), "uncategorized": false, "from": "", "to": "",
+			"period": "2024-06", "sign": "", "q": ""},
+		"PeriodActive": true, "Alloc": map[int64]float64{9: -100}, "AllocTotal": -100.0,
+	}
+	var buf strings.Builder
+	if err := tmpls.pages["transactions"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+		t.Fatalf("render transactions: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "this period") {
+		t.Errorf("expected per-row amortized share, got:\n%s", out)
+	}
+	if !strings.Contains(out, "allocated to this period") {
+		t.Errorf("expected period-allocated total in summary, got:\n%s", out)
+	}
+}
+
+// TestRenderTxnRowPartial exercises the single-row fragment returned by the
+// per-transaction auto-categorize handler, and checks the ✨ button appears
+// only for still-uncategorized rows when AI is enabled.
+func TestRenderTxnRowPartial(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2024, 6, 15, 0, 0, 0, 0, time.UTC)
+	cats := []models.Category{{ID: 3, Name: "Groceries", Kind: "expense"}}
+	uncategorized := models.Transaction{ID: 7, AccountName: "Main", Institution: "UBS",
+		Date: now, Description: "Migros", Amount: -50, Currency: "CHF", BaseAmount: -50,
+		StartMonth: now, EndMonth: now}
+
+	var buf strings.Builder
+	if err := tmpls.pages["transactions"].ExecuteTemplate(&buf, "txn-row",
+		map[string]any{"T": uncategorized, "Cats": cats, "AIEnabled": true}); err != nil {
+		t.Fatalf("render txn-row: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "/transactions/7/categorize") {
+		t.Errorf("expected auto-categorize button for uncategorized row, got:\n%s", out)
+	}
+
+	// A categorized row (or AI disabled) must not offer the button.
+	cid := int64(3)
+	categorized := uncategorized
+	categorized.CategoryID = &cid
+	buf.Reset()
+	if err := tmpls.pages["transactions"].ExecuteTemplate(&buf, "txn-row",
+		map[string]any{"T": categorized, "Cats": cats, "AIEnabled": true}); err != nil {
+		t.Fatalf("render txn-row: %v", err)
+	}
+	if strings.Contains(buf.String(), "/categorize") {
+		t.Errorf("did not expect auto-categorize button for categorized row")
 	}
 }

@@ -18,9 +18,18 @@ type TxnFilter struct {
 	Uncategorized bool
 	From          time.Time
 	To            time.Time
-	Search        string
-	Limit         int
-	Offset        int
+	// PeriodStart/PeriodEnd select transactions whose amortization window overlaps
+	// the given inclusive month range (both first-of-month). This matches how the
+	// reports allocate amounts across months, so drilling into a report figure
+	// yields exactly the transactions that produced it.
+	PeriodStart time.Time
+	PeriodEnd   time.Time
+	// Sign restricts to income ("income": base_amount > 0) or expenses
+	// ("expense": base_amount < 0). Empty means both.
+	Sign   string
+	Search string
+	Limit  int
+	Offset int
 }
 
 const txnSelect = `
@@ -68,6 +77,16 @@ func (s *Store) ListTransactions(ctx context.Context, f TxnFilter) ([]models.Tra
 	}
 	if !f.To.IsZero() {
 		add("t.txn_date <= $%d", f.To)
+	}
+	if !f.PeriodStart.IsZero() && !f.PeriodEnd.IsZero() {
+		add("t.start_month <= $%d", f.PeriodEnd)
+		add("t.end_month >= $%d", f.PeriodStart)
+	}
+	switch f.Sign {
+	case "income":
+		where = append(where, "t.base_amount > 0")
+	case "expense":
+		where = append(where, "t.base_amount < 0")
 	}
 	if strings.TrimSpace(f.Search) != "" {
 		add("t.description ILIKE '%%' || $%d || '%%'", strings.TrimSpace(f.Search))
@@ -184,11 +203,6 @@ func (s *Store) UpdateTransactionNote(ctx context.Context, id int64, note string
 func (s *Store) DeleteTransaction(ctx context.Context, id int64) error {
 	_, err := s.pool.Exec(ctx, `DELETE FROM transactions WHERE id = $1`, id)
 	return err
-}
-
-// UncategorizedForAI returns transactions with no category, for the AI pass.
-func (s *Store) UncategorizedForAI(ctx context.Context, limit int) ([]models.Transaction, error) {
-	return s.ListTransactions(ctx, TxnFilter{Uncategorized: true, Limit: limit})
 }
 
 func firstOfMonth(t time.Time) time.Time {

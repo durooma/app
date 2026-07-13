@@ -24,14 +24,14 @@
 	</thead>
 	<tbody>
 		{{range .Rows}}
+		{{$row := .}}
 		<tr>
-			<td class="sticky-col">{{.Category}}</td>
-			{{$row := .}}
+			<td class="sticky-col"><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$.Year}}">{{.Category}}</a></td>
 			{{range seq 1 12}}
 				{{$v := index $row.Months .}}
-				<td class="num {{signclass $v}}">{{if $v}}{{money $v}}{{end}}</td>
+				<td class="num {{signclass $v}}">{{if $v}}<a class="drill" href="/transactions?{{if $row.CategoryID}}category_id={{$row.CategoryID}}{{else}}uncategorized=1{{end}}&period={{printf "%d-%02d" $.Year .}}">{{money $v}}</a>{{end}}</td>
 			{{end}}
-			<td class="num total-col {{signclass .Total}}">{{money .Total}}</td>
+			<td class="num total-col {{signclass .Total}}"><a class="drill" href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$.Year}}">{{money .Total}}</a></td>
 		</tr>
 		{{end}}
 		{{if not .Rows}}<tr><td colspan="14" class="muted">No data for {{.Year}}.</td></tr>{{end}}
@@ -39,17 +39,17 @@
 	<tfoot>
 		<tr class="foot-income">
 			<td class="sticky-col">Income</td>
-			{{range .Months}}<td class="num pos">{{if .Income}}{{money .Income}}{{end}}</td>{{end}}
+			{{range .Months}}<td class="num pos">{{if .Income}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}&sign=income">{{money .Income}}</a>{{end}}</td>{{end}}
 			<td class="num total-col pos"></td>
 		</tr>
 		<tr class="foot-expense">
 			<td class="sticky-col">Expenses</td>
-			{{range .Months}}<td class="num neg">{{if .Expense}}{{money .Expense}}{{end}}</td>{{end}}
+			{{range .Months}}<td class="num neg">{{if .Expense}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}&sign=expense">{{money .Expense}}</a>{{end}}</td>{{end}}
 			<td class="num total-col neg"></td>
 		</tr>
 		<tr class="foot-net">
 			<td class="sticky-col">Net</td>
-			{{range .Months}}<td class="num {{signclass .Net}}">{{if .Net}}{{money .Net}}{{end}}</td>{{end}}
+			{{range .Months}}<td class="num {{signclass .Net}}">{{if .Net}}<a class="drill" href="/transactions?period={{printf "%d-%02d" $.Year .Month}}">{{money .Net}}</a>{{end}}</td>{{end}}
 			<td class="num total-col"></td>
 		</tr>
 	</tfoot>

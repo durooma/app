@@ -1,5 +1,29 @@
 {{define "content"}}
-<div class="page-head"><h1>Transactions</h1></div>
+<div class="page-head">
+	<h1>Transactions</h1>
+	{{if .AIEnabled}}
+	<form method="post" action="/transactions/categorize" class="inline">
+		{{$f := .Filter}}
+		<input type="hidden" name="institution_id" value="{{index $f "institution_id"}}">
+		<input type="hidden" name="account_id" value="{{index $f "account_id"}}">
+		<input type="hidden" name="category_id" value="{{index $f "category_id"}}">
+		<input type="hidden" name="uncategorized" value="{{if index $f "uncategorized"}}1{{end}}">
+		<input type="hidden" name="from" value="{{index $f "from"}}">
+		<input type="hidden" name="to" value="{{index $f "to"}}">
+		<input type="hidden" name="period" value="{{index $f "period"}}">
+		<input type="hidden" name="sign" value="{{index $f "sign"}}">
+		<input type="hidden" name="q" value="{{index $f "q"}}">
+		<button type="submit" title="Auto-categorize every uncategorized transaction matching the current filter">✨ Categorize all</button>
+	</form>
+	{{end}}
+</div>
+
+{{with .Report}}
+<div class="alert ok">
+	Categorized {{.Total}} transactions with <strong>{{.Provider}}</strong> —
+	{{.ByRules}} by rules, {{.ByAI}} by AI, {{.Unresolved}} left unresolved.
+</div>
+{{end}}
 
 <form method="get" action="/transactions" class="filters">
 	{{$f := .Filter}}
@@ -18,12 +42,26 @@
 	<label class="chk"><input type="checkbox" name="uncategorized" value="1" {{if index $f "uncategorized"}}checked{{end}}> Uncategorized</label>
 	<input type="date" name="from" value="{{index $f "from"}}">
 	<input type="date" name="to" value="{{index $f "to"}}">
+	{{/* period/sign come from report drill-downs; keep them across manual re-filtering */}}
+	<input type="hidden" name="period" value="{{index $f "period"}}">
+	<input type="hidden" name="sign" value="{{index $f "sign"}}">
 	<input type="search" name="q" placeholder="Search description" value="{{index $f "q"}}">
 	<button type="submit">Filter</button>
 	<a href="/transactions" class="btn-link">Reset</a>
 </form>
 
-<p class="muted">{{len .Transactions}} shown · net {{money .Total}} {{.BaseCurrency}}</p>
+{{if or (index $f "period") (index $f "sign")}}
+<div class="drill-bar">
+	<span class="chip">
+		Drilled in{{with index $f "period"}}: {{.}}{{end}}{{with index $f "sign"}} · {{.}}{{end}}
+		<a class="chip-x" title="Clear the period/income filter"
+			href="/transactions?account_id={{index $f "account_id"}}&institution_id={{index $f "institution_id"}}&category_id={{index $f "category_id"}}&uncategorized={{if index $f "uncategorized"}}1{{end}}&from={{index $f "from"}}&to={{index $f "to"}}&q={{index $f "q"}}">✕</a>
+	</span>
+	<span class="muted">Amortized transactions show their full amount and the share allocated to this period.</span>
+</div>
+{{end}}
+
+<p class="muted">{{len .Transactions}} shown · net {{money .Total}} {{.BaseCurrency}}{{if .PeriodActive}} · <strong>{{money .AllocTotal}}</strong> allocated to this period{{end}}</p>
 
 <div class="table-scroll">
 <table class="txns">
@@ -36,34 +74,11 @@
 	</thead>
 	<tbody>
 		{{$cats := .Categories}}
+		{{$ai := .AIEnabled}}
+		{{$alloc := .Alloc}}
+		{{$pa := .PeriodActive}}
 		{{range .Transactions}}
-		<tr>
-			<td class="nowrap">{{date .Date}}</td>
-			<td class="nowrap"><span class="pill">{{.Institution}}</span> {{.AccountName}}</td>
-			<td>{{.Description}}{{if .Note}}<br><small class="muted">{{.Note}}</small>{{end}}</td>
-			<td class="num nowrap">{{money .Amount}} {{.Currency}}</td>
-			<td class="num nowrap {{signclass .BaseAmount}}">{{money .BaseAmount}}</td>
-			<td>
-				<select name="category_id" hx-post="/transactions/{{.ID}}/category" hx-swap="none" hx-trigger="change">
-					<option value="0">—</option>
-					{{$tx := .}}
-					{{range $cats}}<option value="{{.ID}}" {{if eq .ID $tx.CatID}}selected{{end}}>{{.Name}}</option>{{end}}
-				</select>
-			</td>
-			<td class="nowrap">
-				<form method="post" action="/transactions/{{.ID}}/months" class="months">
-					<input type="month" name="start_month" value="{{monthval .StartMonth}}">
-					<input type="month" name="end_month" value="{{monthval .EndMonth}}">
-					<button type="submit" title="Assign to this month or range">✓</button>
-					{{if .Amortized}}<span class="pill amort" title="Amortized over {{.MonthSpan}} months">÷{{.MonthSpan}}</span>{{end}}
-				</form>
-			</td>
-			<td>
-				<button class="del" hx-post="/transactions/{{.ID}}/delete"
-					hx-target="closest tr" hx-swap="outerHTML"
-					hx-confirm="Delete this transaction?">✕</button>
-			</td>
-		</tr>
+		{{template "txn-row" (dict "T" . "Cats" $cats "AIEnabled" $ai "PeriodActive" $pa "Alloc" $alloc)}}
 		{{end}}
 		{{if not .Transactions}}<tr><td colspan="8" class="muted">No transactions match. Try <a href="/import">importing</a> some.</td></tr>{{end}}
 	</tbody>
@@ -74,4 +89,39 @@
 	{{if gt .Page 1}}<a href="?page={{add .Page -1}}">← Newer</a>{{end}}
 	{{if .HasMore}}<a href="?page={{add .Page 1}}">Older →</a>{{end}}
 </div>
+{{end}}
+
+{{define "txn-row"}}
+{{$tx := .T}}
+<tr>
+	<td class="nowrap">{{date $tx.Date}}</td>
+	<td class="nowrap"><span class="pill">{{$tx.Institution}}</span> {{$tx.AccountName}}</td>
+	<td>{{$tx.Description}}{{if $tx.Note}}<br><small class="muted">{{$tx.Note}}</small>{{end}}</td>
+	<td class="num nowrap">{{money $tx.Amount}} {{$tx.Currency}}</td>
+	<td class="num nowrap {{signclass $tx.BaseAmount}}">{{money $tx.BaseAmount}}{{if and .PeriodActive $tx.Amortized}}<br><small class="muted drill-share">→ {{money (index .Alloc $tx.ID)}} this period</small>{{end}}</td>
+	<td>
+		<select name="category_id" hx-post="/transactions/{{$tx.ID}}/category" hx-swap="none" hx-trigger="change">
+			<option value="0">—</option>
+			{{range .Cats}}<option value="{{.ID}}" {{if eq .ID $tx.CatID}}selected{{end}}>{{.Name}}</option>{{end}}
+		</select>
+		{{if and .AIEnabled (not $tx.CategoryID)}}
+		<button class="auto-cat" title="Auto-categorize this transaction"
+			hx-post="/transactions/{{$tx.ID}}/categorize"
+			hx-target="closest tr" hx-swap="outerHTML">✨</button>
+		{{end}}
+	</td>
+	<td class="nowrap">
+		<form method="post" action="/transactions/{{$tx.ID}}/months" class="months">
+			<input type="month" name="start_month" value="{{monthval $tx.StartMonth}}">
+			<input type="month" name="end_month" value="{{monthval $tx.EndMonth}}">
+			<button type="submit" title="Assign to this month or range">✓</button>
+			{{if $tx.Amortized}}<span class="pill amort" title="Amortized over {{$tx.MonthSpan}} months">÷{{$tx.MonthSpan}}</span>{{end}}
+		</form>
+	</td>
+	<td>
+		<button class="del" hx-post="/transactions/{{$tx.ID}}/delete"
+			hx-target="closest tr" hx-swap="outerHTML"
+			hx-confirm="Delete this transaction?">✕</button>
+	</td>
+</tr>
 {{end}}

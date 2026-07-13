@@ -75,9 +75,10 @@ func (s *Server) handleMonthDeepDive(w http.ResponseWriter, r *http.Request) {
 
 // matrixRow is a category with its 12 monthly values (index 1..12) and a total.
 type matrixRow struct {
-	Category string
-	Months   [13]float64
-	Total    float64
+	Category   string
+	CategoryID *int64
+	Months     [13]float64
+	Total      float64
 }
 
 func (s *Server) handleYearOverview(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +100,7 @@ func (s *Server) handleYearOverview(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cells {
 		row, ok := rowByCat[c.CategoryName]
 		if !ok {
-			row = &matrixRow{Category: c.CategoryName}
+			row = &matrixRow{Category: c.CategoryName, CategoryID: c.CategoryID}
 			rowByCat[c.CategoryName] = row
 		}
 		if c.Month >= 1 && c.Month <= 12 {
@@ -122,9 +123,10 @@ func (s *Server) handleYearOverview(w http.ResponseWriter, r *http.Request) {
 
 // yearMatrixRow is a category with per-year values for the multi-year view.
 type yearMatrixRow struct {
-	Category string
-	ByYear   map[int]float64
-	Total    float64
+	Category   string
+	CategoryID *int64
+	ByYear     map[int]float64
+	Total      float64
 }
 
 func (s *Server) handleMultiYear(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +152,7 @@ func (s *Server) handleMultiYear(w http.ResponseWriter, r *http.Request) {
 	for _, m := range matrix {
 		row, ok := rowByCat[m.CategoryName]
 		if !ok {
-			row = &yearMatrixRow{Category: m.CategoryName, ByYear: map[int]float64{}}
+			row = &yearMatrixRow{Category: m.CategoryName, CategoryID: m.CategoryID, ByYear: map[int]float64{}}
 			rowByCat[m.CategoryName] = row
 		}
 		row.ByYear[m.Year] += m.Amount

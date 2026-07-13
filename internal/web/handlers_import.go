@@ -41,15 +41,3 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 	}
 	s.templates.render(w, "import", data)
 }
-
-func (s *Server) handleCategorize(w http.ResponseWriter, r *http.Request) {
-	report, err := s.ai.Categorize(r.Context())
-
-	data := s.base(r.Context(), "Import", "import")
-	if err != nil {
-		data["Error"] = err.Error()
-	} else {
-		data["Report"] = report
-	}
-	s.templates.render(w, "import", data)
-}

@@ -52,6 +52,22 @@ func templateFuncs() template.FuncMap {
 			return out
 		},
 		"add": func(a, b int) int { return a + b },
+		// dict builds a map from alternating key/value pairs, letting a template
+		// pass multiple values into an included block.
+		"dict": func(pairs ...any) (map[string]any, error) {
+			if len(pairs)%2 != 0 {
+				return nil, fmt.Errorf("dict: odd number of arguments")
+			}
+			m := make(map[string]any, len(pairs)/2)
+			for i := 0; i < len(pairs); i += 2 {
+				key, ok := pairs[i].(string)
+				if !ok {
+					return nil, fmt.Errorf("dict: key %d is not a string", i)
+				}
+				m[key] = pairs[i+1]
+			}
+			return m, nil
+		},
 	}
 }
 
@@ -111,6 +127,20 @@ func (t *templates) render(w http.ResponseWriter, page string, data any) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.ExecuteTemplate(w, "layout.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// renderPartial executes a single named block (e.g. an HTMX row fragment)
+// defined within the given page's template, without the surrounding layout.
+func (t *templates) renderPartial(w http.ResponseWriter, page, block string, data any) {
+	tmpl, ok := t.pages[page]
+	if !ok {
+		http.Error(w, "template not found: "+page, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, block, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

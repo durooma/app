@@ -49,6 +49,8 @@ func (s *Server) Handler() http.Handler {
 
 	// Unified transaction view
 	mux.HandleFunc("GET /transactions", s.handleTransactions)
+	mux.HandleFunc("POST /transactions/categorize", s.handleCategorizeAll)
+	mux.HandleFunc("POST /transactions/{id}/categorize", s.handleCategorizeOne)
 	mux.HandleFunc("POST /transactions/{id}/category", s.handleSetCategory)
 	mux.HandleFunc("POST /transactions/{id}/months", s.handleSetMonths)
 	mux.HandleFunc("POST /transactions/{id}/note", s.handleSetNote)
@@ -72,9 +74,6 @@ func (s *Server) Handler() http.Handler {
 	// Import
 	mux.HandleFunc("GET /import", s.handleImportForm)
 	mux.HandleFunc("POST /import", s.handleImport)
-
-	// AI categorization
-	mux.HandleFunc("POST /categorize", s.handleCategorize)
 
 	// Reports
 	mux.HandleFunc("GET /reports/year", s.handleYearDeepDive)
