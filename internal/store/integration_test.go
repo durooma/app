@@ -132,4 +132,17 @@ func TestInsertDedup(t *testing.T) {
 	if n1 != 1 || n2 != 0 {
 		t.Errorf("dedup failed: first insert %d (want 1), second %d (want 0)", n1, n2)
 	}
+
+	secondAcct, err := st.CreateAccount(ctx, "UBS", "Joint", "CHF")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx.AccountID = secondAcct
+	n3, err := st.InsertTransactions(ctx, []models.Transaction{tx})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n3 != 1 {
+		t.Errorf("same external hash in a different account inserted %d, want 1", n3)
+	}
 }

@@ -150,7 +150,8 @@ func (s *Store) ExistingHashes(ctx context.Context, hashes []string) (map[string
 }
 
 // InsertTransactions bulk-inserts new transactions in one transaction, skipping
-// any that collide on external_hash. Returns the number actually inserted.
+// any that collide on external_hash within the same account. Returns the number
+// actually inserted.
 func (s *Store) InsertTransactions(ctx context.Context, txns []models.Transaction) (int, error) {
 	if len(txns) == 0 {
 		return 0, nil
@@ -168,7 +169,7 @@ func (s *Store) InsertTransactions(ctx context.Context, txns []models.Transactio
 			  (account_id, txn_date, description, amount, currency, base_amount,
 			   base_currency, category_id, start_month, end_month, external_hash, source, note)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-			ON CONFLICT (external_hash) DO NOTHING`,
+			ON CONFLICT (account_id, external_hash) DO NOTHING`,
 			t.AccountID, t.Date, t.Description, t.Amount, t.Currency, t.BaseAmount,
 			t.BaseCurrency, t.CategoryID, t.StartMonth, t.EndMonth, t.ExternalHash, t.Source, t.Note)
 		if err != nil {
