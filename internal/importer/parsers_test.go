@@ -60,3 +60,94 @@ func TestParseSchwab(t *testing.T) {
 		t.Errorf("account/currency wrong: %+v", got[0])
 	}
 }
+
+func TestParseSchwabBrokerage(t *testing.T) {
+	rows := [][]string{
+		{"Date", "Action", "Symbol", "Description", "Quantity", "Price", "Fees & Comm", "Amount"},
+		{"12/30/2025", "Credit Interest", "", "SCHWAB1 INT", "", "", "", "$2.67"},
+		{"12/30/2025 as of 12/28/2025", "Visa Purchase", "", "MOUNTAIN SHOP", "", "", "", "-$42.40"},
+		{"12/24/2025", "Cash Dividend", "VOO", "VANGUARD S&P 500 ETF", "", "", "", "$17.71"},
+		{"12/24/2025", "NRA Tax Adj", "VOO", "VANGUARD S&P 500 ETF", "", "", "", "-$5.31"},
+		{"01/29/2025", "Stock Plan Activity", "GOOG", "ALPHABET INC CLASS C", "21.073", "", "", ""},
+		{"01/29/2025 as of 01/28/2025", "Sell", "GOOG", "ALPHABET INC CLASS C", "21.073", "$196.033", "$0.11", "$4130.89"},
+	}
+
+	got, err := ParseSchwab(rows, "Schwab Joint Tenant")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 4 {
+		t.Fatalf("expected 4 transactions, got %d: %+v", len(got), got)
+	}
+
+	want := []struct {
+		desc     string
+		amount   float64
+		category string
+	}{
+		{"Credit Interest: SCHWAB1 INT", 2.67, "Other Income"},
+		{"Visa Purchase: MOUNTAIN SHOP", -42.40, ""},
+		{"Cash Dividend: VOO - VANGUARD S&P 500 ETF", 17.71, "Dividend"},
+		{"NRA Tax Adj: VOO - VANGUARD S&P 500 ETF", -5.31, "Tax"},
+	}
+	for i, w := range want {
+		if got[i].Desc != w.desc || !approx(got[i].Amount, w.amount) || got[i].Category != w.category {
+			t.Errorf("txn %d = %+v, want desc=%q amount=%.2f category=%q", i, got[i], w.desc, w.amount, w.category)
+		}
+		if got[i].Account != "Schwab Joint Tenant" || got[i].Currency != "USD" {
+			t.Errorf("txn %d account/currency wrong: %+v", i, got[i])
+		}
+	}
+}
+
+func TestParseSchwabBrokerageKeepsOrdinarySale(t *testing.T) {
+	rows := [][]string{
+		{"Date", "Action", "Symbol", "Description", "Quantity", "Price", "Fees & Comm", "Amount"},
+		{"01/29/2025", "Sell", "VOO", "VANGUARD S&P 500 ETF", "2", "$600.00", "$0.01", "$1199.99"},
+	}
+
+	got, err := ParseSchwab(rows, "Schwab Individual")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || !approx(got[0].Amount, 1199.99) {
+		t.Fatalf("ordinary brokerage sale should retain its signed amount: %+v", got)
+	}
+}
+
+func TestParseSchwabBrokerageDefaultAccount(t *testing.T) {
+	rows := [][]string{
+		{"Date", "Action", "Symbol", "Description", "Quantity", "Price", "Fees & Comm", "Amount"},
+		{"12/30/2025", "Credit Interest", "", "SCHWAB1 INT", "", "", "", "$2.67"},
+	}
+
+	got, err := ParseSchwab(rows, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Account != "Schwab Brokerage" {
+		t.Fatalf("default brokerage account wrong: %+v", got)
+	}
+}
+
+func TestParseSchwabEquitySaleLoss(t *testing.T) {
+	rows := [][]string{
+		{"Date", "Action", "Symbol", "Description", "Quantity", "FeesAndCommissions", "DisbursementElection", "Amount", "AwardDate", "AwardId", "VestDate", "VestFairMarketValue", "Type", "Shares", "SalePrice"},
+		{"03/01/2025", "Sale", "ABC", "Share Sale", "5", "$1.00", "", "$399.00", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", "", "", "", "02/01/2025", "$100.00", "RS", "5", "$80.00"},
+	}
+
+	got, err := ParseSchwab(rows, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected one sale transaction, got %d: %+v", len(got), got)
+	}
+	if got[0].Category != "Investment-Sell" || !approx(got[0].Amount, -101) {
+		t.Errorf("stock sale loss wrong (want -101.0): %+v", got[0])
+	}
+	if got[0].Account != "Schwab Equity" {
+		t.Errorf("default equity account = %q, want Schwab Equity", got[0].Account)
+	}
+}

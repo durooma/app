@@ -25,8 +25,8 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
 - **Multi-currency** — each account has its own currency; amounts are converted to
   your base currency (default `CHF`) using historical ECB rates
   ([frankfurter.app](https://frankfurter.app)), cached in the database.
-- **CSV import** for UBS Switzerland and Charles Schwab, with dedup by a
-  date/description/amount hash.
+- **CSV import** for UBS Switzerland plus Charles Schwab brokerage and Equity
+  Awards exports, with dedup by a date/description/amount hash.
 - **Auto-categorization** — deterministic substring rules first, then a pluggable
   LLM provider (Gemini by default) for the rest.
 
@@ -73,6 +73,14 @@ DUROOMA_TEST_DB=postgres://durooma:durooma@localhost:5433/durooma?sslmode=disabl
 3. Duplicates (same date + description + amount) are skipped.
 4. Run **Auto-categorize** to apply rules, then the AI provider, to anything
    still uncategorized.
+
+Schwab Equity Awards imports treat vested RS shares as income at vest fair-market
+value. A later sale contributes only its lot-based gain or loss (after fees), not
+the full proceeds. Compact Schwab brokerage exports do not contain lot cost basis,
+so stock-plan sale proceeds are skipped there and handled by the Equity Awards
+export; other signed `Amount` values are imported as provided. Enter an account
+name when importing separate Individual and Joint Tenant files to keep them
+distinct.
 
 ## Architecture
 

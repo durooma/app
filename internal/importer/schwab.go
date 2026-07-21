@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var headerNorm = regexp.MustCompile(`[^a-z0-9]`)
@@ -16,17 +17,11 @@ func normHeader(h string) string {
 	return headerNorm.ReplaceAllString(s, "")
 }
 
-// ParseSchwab parses a Charles Schwab Equity Awards CSV export. Ported from the
-// original Apps Script parseSchwab: handles RSU vesting (Deposit/RS), sales
-// (with per-lot sub-rows), dividends and tax withholding. Amounts are in USD.
+// ParseSchwab parses Charles Schwab brokerage and Equity Awards CSV exports.
+// Equity Awards rows receive specialized RSU vesting and per-lot sale gain/loss
+// handling; ordinary brokerage rows retain Schwab's signed cash amount. Amounts
+// are in USD.
 func ParseSchwab(rows [][]string, account string) ([]ParsedTxn, error) {
-	if account == "" && len(rows) > 0 {
-		account = strings.TrimSpace(cell(rows[0], 0))
-	}
-	if account == "" || account == "Equity Awards" {
-		account = "Schwab Equity"
-	}
-
 	header := -1
 	for i := 0; i < len(rows) && i < 10; i++ {
 		if strings.EqualFold(cell(rows[i], 0), "Date") {
@@ -58,6 +53,20 @@ func ParseSchwab(rows [][]string, account string) ([]ParsedTxn, error) {
 	cShares := col("shares")
 	cSalePrice := col("saleprice")
 	cSymbol := col("symbol")
+	isEquityAwards := cVestFMV >= 0
+
+	if account == "" && header > 0 {
+		account = strings.TrimSpace(cell(rows[0], 0))
+	}
+	if isEquityAwards && (account == "" || account == "Equity Awards") {
+		account = "Schwab Equity"
+	} else if account == "" {
+		account = "Schwab Brokerage"
+	}
+
+	if !isEquityAwards {
+		return parseSchwabBrokerage(rows[header+1:], account, cDate, cAction, cSymbol, cDesc, cQty, cAmount), nil
+	}
 
 	var out []ParsedTxn
 	for i := header + 1; i < len(rows); i++ {
@@ -133,4 +142,76 @@ func ParseSchwab(rows [][]string, account string) ([]ParsedTxn, error) {
 		}
 	}
 	return out, nil
+}
+
+func parseSchwabBrokerage(rows [][]string, account string, cDate, cAction, cSymbol, cDesc, cQty, cAmount int) []ParsedTxn {
+	var out []ParsedTxn
+	for i, r := range rows {
+		date, ok := parseDate(cell(r, cDate))
+		if !ok || cell(r, cAmount) == "" {
+			continue
+		}
+
+		action := cell(r, cAction)
+		if schwabStockPlanSale(rows, i, date, action, cDate, cAction, cSymbol, cQty) {
+			continue
+		}
+		out = append(out, ParsedTxn{
+			Date:     date,
+			Desc:     schwabBrokerageDescription(action, cell(r, cSymbol), cell(r, cDesc)),
+			Amount:   parseNumber(cell(r, cAmount)),
+			Currency: "USD",
+			Category: schwabBrokerageCategory(action),
+			Account:  account,
+		})
+	}
+	return out
+}
+
+// schwabStockPlanSale identifies a compact export's informational stock-plan
+// activity followed by its matching cash-proceeds row. The compact export has
+// no vest value or cost basis, so importing the proceeds as income would violate
+// the gain/loss-only treatment provided by the Equity Awards export.
+func schwabStockPlanSale(rows [][]string, i int, date time.Time, action string, cDate, cAction, cSymbol, cQty int) bool {
+	if i == 0 || !strings.EqualFold(action, "Sell") {
+		return false
+	}
+	previous := rows[i-1]
+	if !strings.EqualFold(cell(previous, cAction), "Stock Plan Activity") ||
+		!strings.EqualFold(cell(previous, cSymbol), cell(rows[i], cSymbol)) {
+		return false
+	}
+	previousDate, ok := parseDate(cell(previous, cDate))
+	previousQty := parseNumber(cell(previous, cQty))
+	return ok && previousDate.Equal(date) && previousQty > 0 && previousQty == parseNumber(cell(rows[i], cQty))
+}
+
+func schwabBrokerageDescription(action, symbol, description string) string {
+	detail := description
+	if symbol != "" {
+		detail = symbol
+		if description != "" {
+			detail += " - " + description
+		}
+	}
+	if action == "" {
+		return detail
+	}
+	if detail == "" {
+		return action
+	}
+	return action + ": " + detail
+}
+
+func schwabBrokerageCategory(action string) string {
+	switch strings.ToLower(strings.TrimSpace(action)) {
+	case "cash dividend", "dividend":
+		return "Dividend"
+	case "nra tax adj", "tax withholding":
+		return "Tax"
+	case "credit interest":
+		return "Other Income"
+	default:
+		return ""
+	}
 }
