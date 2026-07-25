@@ -2,6 +2,7 @@ package importer
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 )
@@ -58,5 +59,75 @@ func TestGenerateHashStable(t *testing.T) {
 	}
 	if a == c {
 		t.Error("hash collision for different amounts")
+	}
+}
+
+func TestDetectProvider(t *testing.T) {
+	tests := []struct {
+		name string
+		csv  string
+		want string
+	}{
+		{
+			name: "UBS semicolon export with preamble",
+			csv: "Account statement\n" +
+				"Trade date;Trade time;Booking date;Value date;Ccy;Debit;Credit;Sub;Bal;X;Description1;Description2\n",
+			want: "UBS",
+		},
+		{
+			name: "Schwab brokerage export",
+			csv:  "Date,Action,Symbol,Description,Quantity,Price,Fees & Comm,Amount\n",
+			want: "Schwab",
+		},
+		{
+			name: "Schwab equity export with preamble",
+			csv: "Equity Awards\n" +
+				"Date,Action,Symbol,Description,Amount,Vest Fair Market Value\n",
+			want: "Schwab",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DetectProvider([]byte(tt.csv))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.want {
+				t.Fatalf("DetectProvider() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// A header row longer than bufio.Scanner's 64 KB token cap must still sniff as
+// semicolon-delimited rather than silently falling back to comma.
+func TestSniffDelimiterHandlesVeryLongLines(t *testing.T) {
+	padding := strings.Repeat("Description;", 8000) // ~96 KB
+	csv := "Account statement\n" +
+		"Trade date;Trade time;" + padding + "Debit;Credit\n"
+
+	if got := sniffDelimiter([]byte(csv)); got != ';' {
+		t.Fatalf("sniffDelimiter() = %q, want ';'", got)
+	}
+	if got, err := DetectProvider([]byte(csv)); err != nil || got != "UBS" {
+		t.Fatalf("DetectProvider() = %q, %v; want UBS", got, err)
+	}
+}
+
+// The final line counts even without a trailing newline.
+func TestSniffDelimiterUnterminatedLastLine(t *testing.T) {
+	if got := sniffDelimiter([]byte("Trade date;Debit;Credit")); got != ';' {
+		t.Fatalf("sniffDelimiter() = %q, want ';'", got)
+	}
+}
+
+func TestDetectProviderRejectsGenericCSV(t *testing.T) {
+	_, err := DetectProvider([]byte("Date,Description,Amount\n2026-01-01,Lunch,-20\n"))
+	if err == nil {
+		t.Fatal("expected unsupported CSV error")
+	}
+	if !strings.Contains(err.Error(), "unsupported CSV structure") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

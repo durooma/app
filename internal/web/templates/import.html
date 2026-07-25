@@ -5,7 +5,8 @@
 
 {{with .Result}}
 <div class="alert ok">
-	Imported <strong>{{.Inserted}}</strong> new transactions
+	Imported <strong>{{.Inserted}}</strong> new transactions{{if gt $.FilesTotal 1}} from
+	<strong>{{$.FilesImported}}</strong> of <strong>{{$.FilesTotal}}</strong> selected files{{end}}
 	({{.Parsed}} parsed, {{.Duplicates}} duplicates skipped).
 	{{if .Warnings}}
 		<ul>{{range .Warnings}}<li>{{.}}</li>{{end}}</ul>
@@ -14,27 +15,72 @@
 {{end}}
 
 <section>
-	<form method="post" action="/import" enctype="multipart/form-data" class="stack">
-		<label>Provider
-			<select name="provider" required>
-				<option value="UBS">UBS Switzerland</option>
-				<option value="Schwab">Charles Schwab</option>
-			</select>
-		</label>
-		<label>Account name <small class="muted">(optional; blank = auto)</small>
+	<form method="post" action="/import" enctype="multipart/form-data" class="stack" data-busy-form>
+		<label>Account name <small class="muted">(optional; applied to every file)</small>
 			<input name="account" placeholder="e.g. UBS Main">
 		</label>
-		<label>CSV file
-			<input type="file" name="file" accept=".csv,text/csv" required>
+		<label>CSV files
+			<input type="file" name="files" accept=".csv,text/csv" multiple required>
 		</label>
-		<button type="submit">Import CSV</button>
+		<button type="submit">Import CSV files</button>
+		<p class="busy" data-busy hidden role="status" aria-live="polite">
+			<span class="spinner" aria-hidden="true"></span>
+			<span data-busy-text>Importing…</span>
+		</p>
 	</form>
+	<p class="muted">Select one or more UBS or Charles Schwab exports. The matching
+	importer is detected automatically for each file.</p>
 	<p class="muted">Foreign-currency amounts are converted to {{.BaseCurrency}} using
 	historical ECB rates. Duplicate rows (same date, description and amount) are skipped.</p>
-	<p class="muted">For separate Schwab Individual and Joint Tenant exports, enter an
-	account name to keep them distinct. Equity Awards grants are recorded at vest value;
-	sales record only the resulting gain or loss.</p>
+	<p class="muted">Leave the account name blank to keep separate Schwab exports
+	(Individual, Joint Tenant, Equity Awards) distinct — each file is then named from
+	its own header. A name entered above is applied to <em>every</em> file in the
+	upload, which merges them into one account. Equity Awards grants are recorded at
+	vest value; sales record only the resulting gain or loss.</p>
 	<p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
 	to auto-categorize with ✨ <strong>Categorize all</strong>.</p>
 </section>
+
+<script>
+// Importing is a plain full-page POST that can run for a while (FX lookups and
+// per-transaction inserts across every selected file), and the browser shows
+// nothing until the response arrives. Progressive enhancement only: without JS
+// the form still submits, just without feedback.
+(function () {
+	var forms = document.querySelectorAll("form[data-busy-form]");
+
+	function reset(form) {
+		var busy = form.querySelector("[data-busy]");
+		var button = form.querySelector("button[type=submit]");
+		if (busy) busy.hidden = true;
+		if (button) button.disabled = false;
+	}
+
+	forms.forEach(function (form) {
+		form.addEventListener("submit", function () {
+			var busy = form.querySelector("[data-busy]");
+			var label = form.querySelector("[data-busy-text]");
+			var button = form.querySelector("button[type=submit]");
+			var picker = form.querySelector("input[type=file]");
+			var count = picker && picker.files ? picker.files.length : 0;
+
+			if (label) {
+				label.textContent = count > 1
+					? "Importing " + count + " files… large statements can take a while."
+					: "Importing… large statements can take a while.";
+			}
+			if (busy) busy.hidden = false;
+			// Submission has already begun, so disabling here only guards
+			// against a second submit while the first is in flight.
+			if (button) button.disabled = true;
+		});
+	});
+
+	// A back-navigation can restore this page from the bfcache with the button
+	// still disabled and the spinner still running; put it back to rest.
+	window.addEventListener("pageshow", function (event) {
+		if (event.persisted) forms.forEach(reset);
+	});
+})();
+</script>
 {{end}}

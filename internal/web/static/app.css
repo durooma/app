@@ -135,6 +135,19 @@ a.drill:hover { text-decoration: underline; text-underline-offset: 2px; }
 .chip-x:hover { color: var(--neg); text-decoration: none; }
 .drill-share { display: inline-block; margin-top: 2px; font-size: 11px; }
 
+/* Busy row for full-page form POSTs (e.g. an import), which the browser gives
+   no feedback for until the response arrives. Needs the [hidden] override
+   because display:flex would otherwise beat the attribute's display:none. */
+.busy { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); }
+.busy[hidden] { display: none; }
+.spinner {
+	width: 14px; height: 14px; flex: none; border-radius: 50%;
+	border: 2px solid var(--border); border-top-color: var(--accent);
+	animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
 .pager { display: flex; gap: 16px; margin: 16px 0; }
 .alert { padding: 12px 16px; border-radius: var(--radius); margin: 12px 0; border: 1px solid var(--border); }
 .alert.ok { border-color: var(--pos); }

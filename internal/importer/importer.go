@@ -44,15 +44,72 @@ type Result struct {
 }
 
 // Import parses a CSV blob for the given provider ("UBS" or "Schwab"), converts
-// to the base currency, and inserts new (deduplicated) transactions.
+// to the base currency, and inserts new (deduplicated) transactions. New callers
+// should generally use ImportAuto so the provider is inferred from the CSV.
 func (im *Importer) Import(ctx context.Context, provider, accountName string, data []byte) (Result, error) {
 	rows, err := readCSV(data)
 	if err != nil {
 		return Result{}, fmt.Errorf("read csv: %w", err)
 	}
+	return im.importRows(ctx, provider, accountName, rows)
+}
 
+// ImportAuto infers the provider from the CSV's header structure and imports it.
+func (im *Importer) ImportAuto(ctx context.Context, accountName string, data []byte) (Result, error) {
+	rows, err := readCSV(data)
+	if err != nil {
+		return Result{}, fmt.Errorf("read csv: %w", err)
+	}
+	provider, err := detectProvider(rows)
+	if err != nil {
+		return Result{}, err
+	}
+	return im.importRows(ctx, provider, accountName, rows)
+}
+
+// DetectProvider returns the importer name matching the CSV's header structure.
+func DetectProvider(data []byte) (string, error) {
+	rows, err := readCSV(data)
+	if err != nil {
+		return "", fmt.Errorf("read csv: %w", err)
+	}
+	return detectProvider(rows)
+}
+
+func detectProvider(rows [][]string) (string, error) {
+	for _, row := range rows {
+		if normHeader(cell(row, 0)) == "tradedate" && rowHasHeaders(row, "debit", "credit") {
+			return "UBS", nil
+		}
+	}
+
+	for i := 0; i < len(rows) && i < 10; i++ {
+		row := rows[i]
+		if normHeader(cell(row, 0)) == "date" && rowHasHeaders(row, "action", "amount") {
+			return "Schwab", nil
+		}
+	}
+
+	return "", fmt.Errorf("unsupported CSV structure: expected a UBS or Charles Schwab export")
+}
+
+func rowHasHeaders(row []string, required ...string) bool {
+	found := make(map[string]bool, len(row))
+	for _, value := range row {
+		found[normHeader(value)] = true
+	}
+	for _, header := range required {
+		if !found[header] {
+			return false
+		}
+	}
+	return true
+}
+
+func (im *Importer) importRows(ctx context.Context, provider, accountName string, rows [][]string) (Result, error) {
 	var parsed []ParsedTxn
 	var institution string
+	var err error
 	switch strings.ToLower(provider) {
 	case "ubs":
 		institution = "UBS"
@@ -143,12 +200,7 @@ func (im *Importer) Import(ctx context.Context, provider, accountName string, da
 func readCSV(data []byte) ([][]string, error) {
 	data = bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF})
 
-	delim := ','
-	if line, err := bufio.NewReader(bytes.NewReader(data)).ReadString('\n'); err == nil {
-		if strings.Count(line, ";") > strings.Count(line, ",") {
-			delim = ';'
-		}
-	}
+	delim := sniffDelimiter(data)
 
 	r := csv.NewReader(bytes.NewReader(data))
 	r.Comma = delim
@@ -168,4 +220,25 @@ func readCSV(data []byte) ([][]string, error) {
 		rows = append(rows, rec)
 	}
 	return rows, nil
+}
+
+// sniffDelimiter examines several lines because exports may put an
+// undelimited account name or report title before the actual header row.
+// It reads with bufio.Reader rather than bufio.Scanner so that a header line
+// longer than the scanner's 64 KB token cap cannot silently sniff as a comma.
+func sniffDelimiter(data []byte) rune {
+	maxCommas, maxSemicolons := 0, 0
+	r := bufio.NewReader(bytes.NewReader(data))
+	for lines := 0; lines < 10; lines++ {
+		line, err := r.ReadString('\n')
+		maxCommas = max(maxCommas, strings.Count(line, ","))
+		maxSemicolons = max(maxSemicolons, strings.Count(line, ";"))
+		if err != nil { // trailing line without a newline, or EOF
+			break
+		}
+	}
+	if maxSemicolons > maxCommas {
+		return ';'
+	}
+	return ','
 }
