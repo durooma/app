@@ -25,8 +25,9 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
 - **Multi-currency** — each account has its own currency; amounts are converted to
   your base currency (default `CHF`) using historical ECB rates
   ([frankfurter.app](https://frankfurter.app)), cached in the database.
-- **CSV import** for UBS Switzerland plus Charles Schwab brokerage and Equity
-  Awards exports, with dedup by a date/description/amount hash.
+- **Multi-file CSV import** for UBS Switzerland plus Charles Schwab brokerage and
+  Equity Awards exports, with automatic format detection and dedup by a
+  date/description/amount hash.
 - **Auto-categorization** — deterministic substring rules first, then a pluggable
   LLM provider (Gemini by default) for the rest.
 
@@ -67,20 +68,31 @@ DUROOMA_TEST_DB=postgres://durooma:durooma@localhost:5433/durooma?sslmode=disabl
 
 ## How importing works
 
-1. Upload a UBS or Schwab CSV on the **Import** page (or `POST /import`).
-2. The matching parser extracts transactions; foreign-currency amounts are
-   converted to the base currency and the account is auto-created.
+1. Upload one or more UBS or Schwab CSVs on the **Import** page (or `POST /import`
+   with one or more `files` parts).
+2. The matching parser is inferred from each file's headers and extracts its
+   transactions; foreign-currency amounts are converted to the base currency and
+   the account is auto-created.
 3. Duplicates (same date + description + amount) are skipped.
 4. Run **Auto-categorize** to apply rules, then the AI provider, to anything
    still uncategorized.
+
+Each file is imported independently: an unreadable or unrecognized one is reported
+by name and the rest still import. Limits per upload are 50 files, 16 MB per file
+and 64 MB in total.
+
+`POST /import` also accepts the pre-multi-file fields for compatibility: a single
+`file` part, and a `provider` of `UBS` or `Schwab` that skips header detection and
+is applied to every part.
 
 Schwab Equity Awards imports treat vested RS shares as income at vest fair-market
 value. A later sale contributes only its lot-based gain or loss (after fees), not
 the full proceeds. Compact Schwab brokerage exports do not contain lot cost basis,
 so stock-plan sale proceeds are skipped there and handled by the Equity Awards
-export; other signed `Amount` values are imported as provided. Enter an account
-name when importing separate Individual and Joint Tenant files to keep them
-distinct.
+export; other signed `Amount` values are imported as provided. Leave the account
+name blank when importing separate Individual and Joint Tenant files so each is
+named from its own header and they stay distinct — a name entered on the form
+applies to every file in that upload and merges them into one account.
 
 ## Architecture
 

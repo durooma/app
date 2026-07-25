@@ -45,7 +45,7 @@ func TestImportUBSIntegration(t *testing.T) {
 	fx := &stubFX{}
 	im := New(st, fx, "CHF")
 
-	res, err := im.Import(ctx, "UBS", "UBS Main", []byte(ubsCSV))
+	res, err := im.ImportAuto(ctx, "UBS Main", []byte(ubsCSV))
 	if err != nil {
 		t.Fatal(err)
 	}

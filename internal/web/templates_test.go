@@ -6,12 +6,101 @@ import (
 	"testing"
 	"time"
 
+	"durooma/internal/importer"
 	"durooma/internal/models"
 )
 
 func TestLoadTemplates(t *testing.T) {
 	if _, err := loadTemplates(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestImportFormSupportsMultipleFilesWithoutProviderChoice(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]any{
+		"Title": "Import", "Nav": "import", "BaseCurrency": "CHF",
+		"Years": []int{2026}, "CurrentYear": 2026, "AIProvider": "none",
+	}
+	var buf strings.Builder
+	if err := tmpls.pages["import"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, `name="files"`) || !strings.Contains(out, " multiple") {
+		t.Fatalf("import form does not expose multi-file selection:\n%s", out)
+	}
+	if strings.Contains(out, `name="provider"`) {
+		t.Fatalf("import form still exposes a provider choice:\n%s", out)
+	}
+}
+
+// The import POST is a full page load with no browser-native feedback, so the
+// form must ship the busy row the inline script reveals on submit.
+func TestImportFormHasBusyIndicator(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf strings.Builder
+	data := map[string]any{
+		"Title": "Import", "Nav": "import", "BaseCurrency": "CHF",
+		"Years": []int{2026}, "CurrentYear": 2026, "AIProvider": "none",
+	}
+	if err := tmpls.pages["import"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		"data-busy-form",  // hook the script binds to
+		`class="busy"`,    // the row itself, hidden until submit
+		`class="spinner"`, // animated by app.css
+		`role="status"`,   // announced to screen readers
+		"data-busy-text",  // swapped for the file count
+		`hidden`,          // starts out of view
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("import form missing %q:\n%s", want, out)
+		}
+	}
+}
+
+// TestImportResultBanner covers the success banner, which only mentions a file
+// count when more than one file was selected.
+func TestImportResultBanner(t *testing.T) {
+	tmpls, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	render := func(imported, total int) string {
+		t.Helper()
+		var buf strings.Builder
+		data := map[string]any{
+			"Title": "Import", "Nav": "import", "BaseCurrency": "CHF",
+			"Years": []int{2026}, "CurrentYear": 2026, "AIProvider": "none",
+			"Result":        importer.Result{Parsed: 9, Inserted: 7, Duplicates: 2},
+			"FilesImported": imported, "FilesTotal": total,
+		}
+		if err := tmpls.pages["import"].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+			t.Fatal(err)
+		}
+		return buf.String()
+	}
+
+	single := render(1, 1)
+	if !strings.Contains(single, "<strong>7</strong> new transactions") {
+		t.Errorf("single-file banner missing insert count:\n%s", single)
+	}
+	if strings.Contains(single, "selected files") {
+		t.Errorf("single-file banner should not mention a file count:\n%s", single)
+	}
+
+	multi := render(2, 3)
+	if !strings.Contains(multi, "<strong>2</strong> of <strong>3</strong> selected files") {
+		t.Errorf("multi-file banner missing the 2-of-3 count:\n%s", multi)
 	}
 }
 
