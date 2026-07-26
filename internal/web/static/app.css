@@ -125,6 +125,15 @@ a.drill:hover { text-decoration: underline; text-underline-offset: 2px; }
 .card strong a { color: inherit; }
 .card:has(a):hover { border-color: var(--accent); }
 
+/* Report scope: the breadcrumb sits opposite the period title, and the
+   sub-period list marks the label that drills one level deeper. */
+.crumbs { display: flex; align-items: center; gap: 8px; margin-left: auto; font-size: 13px; }
+.crumbs .sep { color: var(--border); }
+.crumbs .here { color: var(--muted); font-weight: 600; }
+.subs a.deeper { color: inherit; font-weight: 600; }
+.subs a.deeper:hover, .subs a.deeper:hover .chev { color: var(--accent); }
+.chev { color: var(--muted); }
+
 .drill-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; }
 .chip {
 	display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px;

@@ -17,9 +17,6 @@ var templateFS embed.FS
 //go:embed static/*
 var staticFS embed.FS
 
-var monthNames = []string{"", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}
-
 func templateFuncs() template.FuncMap {
 	return template.FuncMap{
 		"money": func(v float64) string {
@@ -34,24 +31,13 @@ func templateFuncs() template.FuncMap {
 			}
 			return "zero"
 		},
-		"abs": func(v float64) float64 { return math.Abs(v) },
-		"neg": func(v float64) float64 { return -v },
-		"month": func(m int) string {
-			if m >= 1 && m <= 12 {
-				return monthNames[m]
-			}
-			return ""
-		},
+		"abs":      func(v float64) float64 { return math.Abs(v) },
+		"neg":      func(v float64) float64 { return -v },
 		"date":     func(t time.Time) string { return t.Format("2006-01-02") },
 		"monthval": func(t time.Time) string { return t.Format("2006-01") },
-		"seq": func(a, b int) []int {
-			var out []int
-			for i := a; i <= b; i++ {
-				out = append(out, i)
-			}
-			return out
-		},
-		"add": func(a, b int) int { return a + b },
+		"add":      func(a, b int) int { return a + b },
+		// reporturl links to the report view at a given scope, for drilling down.
+		"reporturl": reportURL,
 		// dict builds a map from alternating key/value pairs, letting a template
 		// pass multiple values into an included block.
 		"dict": func(pairs ...any) (map[string]any, error) {

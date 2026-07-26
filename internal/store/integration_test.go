@@ -69,39 +69,122 @@ func TestAmortizationAcrossMonths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	months, err := st.MonthTotalsForYear(ctx, 2024)
+	year := models.Period{Year: 2024}
+	months, err := st.SubPeriodTotals(ctx, year)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, m := range months {
 		want := 0.0
-		if m.Month >= 1 && m.Month <= 3 {
+		if m.Period.Month >= 1 && m.Period.Month <= 3 {
 			want = -100
 		}
 		if !approxEq(m.Expense, want) {
-			t.Errorf("month %d expense = %.2f, want %.2f", m.Month, m.Expense, want)
+			t.Errorf("month %d expense = %.2f, want %.2f", m.Period.Month, m.Expense, want)
 		}
 	}
 
-	totals, err := st.CategoryTotalsForYear(ctx, 2024)
+	totals, err := st.CategoryTotals(ctx, year)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var sum float64
 	for _, ct := range totals {
-		sum += ct.Amount
+		sum += ct.Net
 	}
 	if !approxEq(sum, -300) {
 		t.Errorf("year category total = %.2f, want -300", sum)
 	}
 
-	// The whole -300 lands in 2024 only.
-	years, err := st.YearTotals(ctx)
+	// Drilled into a single month, only that month's third is reported.
+	feb, err := st.Totals(ctx, models.Period{Year: 2024, Month: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(years) != 1 || years[0].Year != 2024 || !approxEq(years[0].Expense, -300) {
+	if !approxEq(feb.Expense, -100) {
+		t.Errorf("february expense = %.2f, want -100", feb.Expense)
+	}
+
+	// The whole -300 lands in 2024 only.
+	years, err := st.SubPeriodTotals(ctx, models.Period{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(years) != 1 || years[0].Period.Year != 2024 || !approxEq(years[0].Expense, -300) {
 		t.Errorf("year totals = %+v", years)
+	}
+}
+
+// TestCategoryTotalsSplitBySign covers a category holding both directions (an
+// expense that was partly refunded): each side must be reported in full so the
+// report's category tables add up to its headline income and expense figures.
+func TestCategoryTotalsSplitBySign(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(t)
+	defer pool.Close()
+	st := New(pool)
+
+	acct, err := st.CreateAccount(ctx, "UBS", "Main", "CHF")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var groceries int64
+	if err := pool.QueryRow(ctx, `SELECT id FROM categories WHERE name='Groceries'`).Scan(&groceries); err != nil {
+		t.Fatal(err)
+	}
+	insert := func(desc string, amount float64, category any, hash string) {
+		t.Helper()
+		_, err := pool.Exec(ctx, `
+			INSERT INTO transactions
+			  (account_id, txn_date, description, amount, currency, base_amount, base_currency,
+			   category_id, start_month, end_month, external_hash, source)
+			VALUES ($1, $2, $3, $4, 'CHF', $4, 'CHF', $5, $6, $6, $7, 'test')`,
+			acct, mon(2024, time.June), desc, amount, category, mon(2024, time.June), hash)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	insert("Migros", -620, groceries, "gro-jun")
+	insert("Migros refund", 90, groceries, "gro-refund-jun")
+	insert("Mystery credit", 40, nil, "unk-credit-jun") // uncategorized, both signs
+	insert("Unknown vendor", -10, nil, "unk-debit-jun")
+
+	june := models.Period{Year: 2024, Month: 6}
+	totals, err := st.CategoryTotals(ctx, june)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]models.CategoryTotal{}
+	var sumIncome, sumExpense float64
+	for _, ct := range totals {
+		byName[ct.CategoryName] = ct
+		sumIncome += ct.Income
+		sumExpense += ct.Expense
+	}
+	for _, want := range []models.CategoryTotal{
+		{CategoryName: "Groceries", Income: 90, Expense: -620, Net: -530},
+		{CategoryName: "(uncategorized)", Income: 40, Expense: -10, Net: 30},
+	} {
+		got, ok := byName[want.CategoryName]
+		if !ok {
+			t.Errorf("%q missing from category totals", want.CategoryName)
+			continue
+		}
+		if !approxEq(got.Income, want.Income) || !approxEq(got.Expense, want.Expense) || !approxEq(got.Net, want.Net) {
+			t.Errorf("%q = income %.2f / expense %.2f / net %.2f, want %.2f / %.2f / %.2f",
+				want.CategoryName, got.Income, got.Expense, got.Net,
+				want.Income, want.Expense, want.Net)
+		}
+	}
+
+	// Both sides have to reconcile with the period's headline figures.
+	period, err := st.Totals(ctx, june)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !approxEq(sumIncome, period.Income) || !approxEq(sumExpense, period.Expense) {
+		t.Errorf("categories sum to income %.2f / expense %.2f, but the period totals are %.2f / %.2f",
+			sumIncome, sumExpense, period.Income, period.Expense)
 	}
 }
 

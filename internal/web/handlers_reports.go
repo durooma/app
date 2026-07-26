@@ -2,171 +2,194 @@ package web
 
 import (
 	"net/http"
+	"net/url"
 	"sort"
-	"time"
+	"strconv"
 
 	"durooma/internal/models"
+	"durooma/internal/store"
 )
 
-// splitIncomeExpense separates category totals into income (net positive) and
-// expense (net negative) buckets and returns their sums.
-func splitIncomeExpense(totals []models.CategoryTotal) (income, expense []models.CategoryTotal, incomeSum, expenseSum float64) {
-	for _, t := range totals {
-		if t.Amount >= 0 {
-			income = append(income, t)
-			incomeSum += t.Amount
-		} else {
-			expense = append(expense, t)
-			expenseSum += t.Amount
-		}
-	}
-	return
+// txnLimit caps the transaction list shown when drilling all the way into a
+// single month; the full list stays one click away in the transactions view.
+const txnLimit = 500
+
+// breakdownCell is one category's amount in one sub-period of the report scope.
+type breakdownCell struct {
+	Period models.Period
+	Amount float64
 }
 
-func (s *Server) handleYearDeepDive(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	year := intParam(r, "year", time.Now().Year())
-
-	totals, err := s.store.CategoryTotalsForYear(ctx, year)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	months, err := s.store.MonthTotalsForYear(ctx, year)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	income, expense, incomeSum, expenseSum := splitIncomeExpense(totals)
-
-	data := s.base(ctx, "Yearly deep dive", "year")
-	data["Year"] = year
-	data["Income"] = income
-	data["Expense"] = expense
-	data["IncomeSum"] = incomeSum
-	data["ExpenseSum"] = expenseSum
-	data["Net"] = incomeSum + expenseSum
-	data["Months"] = months
-	s.templates.render(w, "year_deepdive", data)
-}
-
-func (s *Server) handleMonthDeepDive(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	year := intParam(r, "year", time.Now().Year())
-	month := intParam(r, "month", int(time.Now().Month()))
-
-	totals, err := s.store.CategoryTotalsForMonth(ctx, year, month)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	income, expense, incomeSum, expenseSum := splitIncomeExpense(totals)
-
-	data := s.base(ctx, "Monthly deep dive", "month")
-	data["Year"] = year
-	data["Month"] = month
-	data["Income"] = income
-	data["Expense"] = expense
-	data["IncomeSum"] = incomeSum
-	data["ExpenseSum"] = expenseSum
-	data["Net"] = incomeSum + expenseSum
-	s.templates.render(w, "month_deepdive", data)
-}
-
-// matrixRow is a category with its 12 monthly values (index 1..12) and a total.
-type matrixRow struct {
+// breakdownRow is one category within the report scope: its total plus the
+// value in each sub-period column (aligned with the Subs slice).
+type breakdownRow struct {
 	Category   string
 	CategoryID *int64
-	Months     [13]float64
 	Total      float64
+	Cells      []breakdownCell
 }
 
-func (s *Server) handleYearOverview(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	year := intParam(r, "year", time.Now().Year())
+// buildBreakdown turns the scope's category totals and its per-sub-period cells
+// into the income and expense tables. Each side counts only the allocations of
+// that sign, so the tables add up to the period's totals and a category holding
+// both — an expense with a refund, a mixed uncategorized bucket — appears in
+// both rather than being netted into one.
+func buildBreakdown(totals []models.CategoryTotal, subs []models.PeriodTotal,
+	cells []models.PeriodCategoryCell) (income, expense []breakdownRow) {
 
-	cells, err := s.store.YearMatrix(ctx, year)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	months, err := s.store.MonthTotalsForYear(ctx, year)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-
-	rowByCat := map[string]*matrixRow{}
+	byCategory := map[string]map[models.Period]models.PeriodCategoryCell{}
 	for _, c := range cells {
-		row, ok := rowByCat[c.CategoryName]
-		if !ok {
-			row = &matrixRow{Category: c.CategoryName, CategoryID: c.CategoryID}
-			rowByCat[c.CategoryName] = row
+		if byCategory[c.CategoryName] == nil {
+			byCategory[c.CategoryName] = map[models.Period]models.PeriodCategoryCell{}
 		}
-		if c.Month >= 1 && c.Month <= 12 {
-			row.Months[c.Month] += c.Amount
-			row.Total += c.Amount
+		cell := byCategory[c.CategoryName][c.Period]
+		cell.Income += c.Income
+		cell.Expense += c.Expense
+		byCategory[c.CategoryName][c.Period] = cell
+	}
+	// side builds one row of one table, picking the same side out of the category
+	// total and out of every sub-period cell.
+	side := func(t models.CategoryTotal, total float64, pick func(models.PeriodCategoryCell) float64) breakdownRow {
+		row := breakdownRow{Category: t.CategoryName, CategoryID: t.CategoryID, Total: total}
+		for _, s := range subs {
+			row.Cells = append(row.Cells, breakdownCell{
+				Period: s.Period,
+				Amount: pick(byCategory[t.CategoryName][s.Period]),
+			})
+		}
+		return row
+	}
+	for _, t := range totals {
+		if t.Income != 0 {
+			income = append(income, side(t, t.Income,
+				func(c models.PeriodCategoryCell) float64 { return c.Income }))
+		}
+		if t.Expense != 0 {
+			expense = append(expense, side(t, t.Expense,
+				func(c models.PeriodCategoryCell) float64 { return c.Expense }))
 		}
 	}
-	rows := make([]*matrixRow, 0, len(rowByCat))
-	for _, r := range rowByCat {
-		rows = append(rows, r)
-	}
-	sort.Slice(rows, func(i, j int) bool { return rows[i].Total > rows[j].Total })
-
-	data := s.base(ctx, "Year overview", "overview")
-	data["Year"] = year
-	data["Rows"] = rows
-	data["Months"] = months
-	s.templates.render(w, "year_overview", data)
+	// Biggest first on both sides.
+	sort.SliceStable(income, func(i, j int) bool { return income[i].Total > income[j].Total })
+	sort.SliceStable(expense, func(i, j int) bool { return expense[i].Total < expense[j].Total })
+	return income, expense
 }
 
-// yearMatrixRow is a category with per-year values for the multi-year view.
-type yearMatrixRow struct {
-	Category   string
-	CategoryID *int64
-	ByYear     map[int]float64
-	Total      float64
-}
-
-func (s *Server) handleMultiYear(w http.ResponseWriter, r *http.Request) {
+// handleReports renders the single report view at whichever scope the request
+// asks for: all time, one year, or one month. Each level shows the same three
+// things — the period's totals, its category breakdown, and the list of
+// sub-periods to drill into — plus the transactions themselves once there is
+// nothing left to drill into.
+func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	p := periodFromRequest(r)
 
-	yearTotals, err := s.store.YearTotals(ctx)
+	totals, err := s.store.Totals(ctx, p)
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	matrix, err := s.store.CategoryMatrixForYears(ctx)
+	catTotals, err := s.store.CategoryTotals(ctx, p)
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-
-	years := make([]int, 0, len(yearTotals))
-	for _, yt := range yearTotals {
-		years = append(years, yt.Year)
+	subs, err := s.store.SubPeriodTotals(ctx, p)
+	if err != nil {
+		s.fail(w, err)
+		return
 	}
+	cells, err := s.store.CategoryMatrix(ctx, p)
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	income, expense := buildBreakdown(catTotals, subs, cells)
 
-	rowByCat := map[string]*yearMatrixRow{}
-	for _, m := range matrix {
-		row, ok := rowByCat[m.CategoryName]
-		if !ok {
-			row = &yearMatrixRow{Category: m.CategoryName, CategoryID: m.CategoryID, ByYear: map[int]float64{}}
-			rowByCat[m.CategoryName] = row
+	data := s.base(ctx, "Reports — "+p.Label(), "reports")
+	data["Period"] = p
+	data["Crumbs"] = crumbs(p)
+	data["Totals"] = totals
+	data["Income"] = income
+	data["Expense"] = expense
+	data["Subs"] = subs
+
+	// At month level there is no further period to drill into, so the individual
+	// transactions take the place of the sub-period list.
+	if p.IsMonth() {
+		start, end := p.Bounds()
+		txns, err := s.store.ListTransactions(ctx, store.TxnFilter{
+			PeriodStart: start, PeriodEnd: end, Limit: txnLimit,
+		})
+		if err != nil {
+			s.fail(w, err)
+			return
 		}
-		row.ByYear[m.Year] += m.Amount
-		row.Total += m.Amount
+		alloc := make(map[int64]float64, len(txns))
+		for _, t := range txns {
+			alloc[t.ID] = t.AllocatedFor(start, end)
+		}
+		data["Transactions"] = txns
+		data["Alloc"] = alloc
+		data["TxnsTruncated"] = len(txns) == txnLimit
 	}
-	rows := make([]*yearMatrixRow, 0, len(rowByCat))
-	for _, r := range rowByCat {
-		rows = append(rows, r)
-	}
-	sort.Slice(rows, func(i, j int) bool { return rows[i].Total > rows[j].Total })
+	s.templates.render(w, "reports", data)
+}
 
-	data := s.base(ctx, "Multi-year overview", "years")
-	data["Years"] = years
-	data["YearTotals"] = yearTotals
-	data["Rows"] = rows
-	s.templates.render(w, "multi_year", data)
+// periodFromRequest reads the report scope from ?year=&month=, ignoring a month
+// given without a year and any month outside 1-12.
+func periodFromRequest(r *http.Request) models.Period {
+	p := models.Period{Year: intParam(r, "year", 0), Month: intParam(r, "month", 0)}
+	if p.Month < 1 || p.Month > 12 {
+		p.Month = 0
+	}
+	if p.Year == 0 {
+		p.Month = 0
+	}
+	return p
+}
+
+// crumb is one step of the scope breadcrumb.
+type crumb struct {
+	Label   string
+	URL     string
+	Current bool
+}
+
+// crumbs builds the trail from all time down to the current scope.
+func crumbs(p models.Period) []crumb {
+	trail := []models.Period{{}}
+	if !p.IsAll() {
+		trail = append(trail, models.Period{Year: p.Year})
+	}
+	if p.IsMonth() {
+		trail = append(trail, p)
+	}
+	out := make([]crumb, 0, len(trail))
+	for _, t := range trail {
+		out = append(out, crumb{Label: t.Label(), URL: reportURL(t), Current: t == p})
+	}
+	return out
+}
+
+// reportURL is the report view at a given scope.
+func reportURL(p models.Period) string {
+	q := url.Values{}
+	if p.Year != 0 {
+		q.Set("year", strconv.Itoa(p.Year))
+	}
+	if p.Month != 0 {
+		q.Set("month", strconv.Itoa(p.Month))
+	}
+	if len(q) == 0 {
+		return "/reports"
+	}
+	return "/reports?" + q.Encode()
+}
+
+// handleLegacyReport redirects the pre-consolidation report URLs
+// (/reports/year, /reports/month, /reports/year-overview, /reports/years) to the
+// single report view, keeping whichever year and month they carried.
+func (s *Server) handleLegacyReport(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, reportURL(periodFromRequest(r)), http.StatusFound)
 }

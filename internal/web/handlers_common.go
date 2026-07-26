@@ -4,25 +4,23 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"time"
 )
 
-// base builds the common template data shared by every page (nav state, base
-// currency, and the list of years for the year switchers).
+// base builds the common template data shared by every page (nav state and base
+// currency).
 func (s *Server) base(ctx context.Context, title, active string) map[string]any {
-	years, _ := s.store.AvailableYears(ctx)
 	return map[string]any{
 		"Title":        title,
 		"Nav":          active,
 		"BaseCurrency": s.cfg.BaseCurrency,
-		"Years":        years,
-		"CurrentYear":  time.Now().Year(),
 		"AIProvider":   s.cfg.AIProvider,
 	}
 }
 
+// handleHome opens the report view at its widest scope, which is where the
+// drill-down starts.
 func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/reports/year-overview?year="+strconv.Itoa(time.Now().Year()), http.StatusFound)
+	http.Redirect(w, r, "/reports", http.StatusFound)
 }
 
 // intParam reads an integer query/form value with a default.
