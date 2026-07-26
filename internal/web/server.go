@@ -75,11 +75,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /import", s.handleImportForm)
 	mux.HandleFunc("POST /import", s.handleImport)
 
-	// Reports
-	mux.HandleFunc("GET /reports/year", s.handleYearDeepDive)
-	mux.HandleFunc("GET /reports/month", s.handleMonthDeepDive)
-	mux.HandleFunc("GET /reports/year-overview", s.handleYearOverview)
-	mux.HandleFunc("GET /reports/years", s.handleMultiYear)
+	// Reports — one view, scoped by ?year=&month=. The subtree pattern catches
+	// the old per-scope URLs and redirects them here.
+	mux.HandleFunc("GET /reports", s.handleReports)
+	mux.HandleFunc("GET /reports/{path...}", s.handleLegacyReport)
 
 	return logRequests(mux)
 }

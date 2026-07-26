@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
 type Institution struct {
 	ID        int64
@@ -112,34 +116,111 @@ func overlapMonths(aStart, aEnd, bStart, bEnd time.Time) int {
 	return hi - lo + 1
 }
 
-// CategoryTotal is a per-category aggregate used by the deep-dive reports.
+// CategoryTotal is a per-category aggregate used by the report breakdown. The
+// two sides are summed separately rather than netted, so a category holding both
+// (an expense with a refund, a mixed uncategorized bucket) is counted in full on
+// each side and the breakdown reconciles with the period's totals.
 type CategoryTotal struct {
 	CategoryID   *int64
 	CategoryName string
 	Kind         string
-	Amount       float64 // signed, in base currency
+	Income       float64 // sum of the positive allocations, in base currency
+	Expense      float64 // sum of the negative allocations (negative or zero)
+	Net          float64
 }
 
-// MonthCategoryCell is one cell of the year matrix (a category's amount in a month).
-type MonthCategoryCell struct {
-	Month        int // 1-12
+// Period is a reporting scope: all time (Year 0), one whole year (Month 0) or a
+// single month. The report view drills from all time into a year into a month.
+type Period struct {
+	Year  int
+	Month int // 1-12
+}
+
+func (p Period) IsAll() bool   { return p.Year == 0 }
+func (p Period) IsYear() bool  { return p.Year != 0 && p.Month == 0 }
+func (p Period) IsMonth() bool { return p.Year != 0 && p.Month != 0 }
+
+// Parent returns the scope one level up (a month's year, a year's all time).
+func (p Period) Parent() Period {
+	if p.IsMonth() {
+		return Period{Year: p.Year}
+	}
+	return Period{}
+}
+
+// Param renders the period the way the transactions view's ?period= filter
+// expects it: "" for all time, "2024" for a year, "2024-06" for a month.
+func (p Period) Param() string {
+	switch {
+	case p.IsMonth():
+		return fmt.Sprintf("%d-%02d", p.Year, p.Month)
+	case p.IsYear():
+		return strconv.Itoa(p.Year)
+	}
+	return ""
+}
+
+// Label names the period in full ("All time", "2024", "Jun 2024").
+func (p Period) Label() string {
+	switch {
+	case p.IsMonth():
+		return fmt.Sprintf("%s %d", MonthName(p.Month), p.Year)
+	case p.IsYear():
+		return strconv.Itoa(p.Year)
+	}
+	return "All time"
+}
+
+// ShortLabel names the period within its parent ("Jun" rather than "Jun 2024"),
+// for use in the sub-period list where the enclosing scope is already known.
+func (p Period) ShortLabel() string {
+	if p.IsMonth() {
+		return MonthName(p.Month)
+	}
+	return p.Label()
+}
+
+// Bounds returns the inclusive first-of-month range the period covers. All time
+// yields zero times, meaning "unbounded".
+func (p Period) Bounds() (start, end time.Time) {
+	switch {
+	case p.IsMonth():
+		s := time.Date(p.Year, time.Month(p.Month), 1, 0, 0, 0, 0, time.UTC)
+		return s, s
+	case p.IsYear():
+		return time.Date(p.Year, time.January, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(p.Year, time.December, 1, 0, 0, 0, 0, time.UTC)
+	}
+	return
+}
+
+// PeriodTotal aggregates one period: the report scope itself, or one of the
+// sub-periods listed inside it (a year when looking at all time, a month when
+// looking at a year).
+type PeriodTotal struct {
+	Period  Period
+	Income  float64
+	Expense float64
+	Net     float64
+}
+
+// PeriodCategoryCell is one cell of the breakdown grid: a category's amounts
+// within one sub-period, split by sign like CategoryTotal.
+type PeriodCategoryCell struct {
+	Period       Period
 	CategoryID   *int64
 	CategoryName string
-	Amount       float64
+	Income       float64
+	Expense      float64
 }
 
-// YearTotal aggregates a single year for the multi-year overview.
-type YearTotal struct {
-	Year    int
-	Income  float64
-	Expense float64
-	Net     float64
-}
+var monthNames = [...]string{"", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}
 
-// MonthTotal aggregates a single month for the year overview.
-type MonthTotal struct {
-	Month   int
-	Income  float64
-	Expense float64
-	Net     float64
+// MonthName returns the abbreviated name of month 1-12 ("" for anything else).
+func MonthName(m int) string {
+	if m >= 1 && m <= 12 {
+		return monthNames[m]
+	}
+	return ""
 }

@@ -1,9 +1,9 @@
 # Durooma — self-hosted personal finance
 
 A lean personal-finance app that unifies transactions across accounts,
-institutions and currencies, with yearly/monthly deep dives, month-range
-amortization, CSV imports (UBS Switzerland & Charles Schwab) and AI-assisted
-categorization.
+institutions and currencies, with a drill-down report from all time down to a
+single month, month-range amortization, CSV imports (UBS Switzerland & Charles
+Schwab) and AI-assisted categorization.
 
 Built to run comfortably on a **512 MB** DigitalOcean droplet or a home server:
 a single ~15 MB Go binary (net/http + `html/template` + HTMX) backed by
@@ -14,10 +14,14 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
 - **Editable categories** with name, description and optional income/expense type.
 - **Unified transaction view** across every account/institution/currency, with
   filtering (institution, account, category, uncategorized, date range, search).
-- **Yearly deep dive** — income & expenses by category, plus a monthly breakdown.
-- **Monthly deep dive** — one month, by category.
-- **Year overview** — every category across all 12 months in one grid.
-- **Multi-year overview** — income/expense/net per year and categories across years.
+- **One report view, drilled by scope** — `/reports` opens on all time, showing
+  income, expenses and balance, the same split by category (with a column per
+  year), and a per-year list. Clicking a year re-scopes everything to that year
+  with a column and a row per month; clicking a month does the same and lists
+  that month's transactions. Every figure links into the transactions view with
+  the matching period, sign and category already filtered. Categories are split
+  by sign rather than netted, so a refunded expense or a mixed uncategorized
+  bucket shows on both sides and each table adds up to the headline total.
 - **Month-range assignment / amortization** — a transaction defaults to the month
   it occurred, but can be reassigned to another month or spread across a range
   (quarter, year, …). Amortized amounts are divided evenly across the months in
