@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="page-head"><h1>Import a statement</h1></div>
+<div class="page-head"><div><p class="eyebrow">Your data</p><h1>Import a statement</h1><p class="page-description">Bring your financial picture together, one statement at a time.</p></div></div>
 
 {{if .Error}}<div class="alert error">{{.Error}}</div>{{end}}
 
@@ -14,12 +14,13 @@
 </div>
 {{end}}
 
-<section>
+<section class="import-layout">
+<div class="form-panel import-panel"><div class="upload-symbol">{{template "icon" "import"}}</div><h2>Your statements, organized</h2><p class="muted">Select CSV exports from UBS or Charles Schwab.</p>
 	<form method="post" action="/import" enctype="multipart/form-data" class="stack" data-busy-form>
 		<label>Account name <small class="muted">(optional; applied to every file)</small>
 			<input name="account" placeholder="e.g. UBS Main">
 		</label>
-		<label>CSV files
+		<label class="file-label">CSV files
 			<input type="file" name="files" accept=".csv,text/csv" multiple required>
 		</label>
 		<button type="submit">Import CSV files</button>
@@ -28,6 +29,7 @@
 			<span data-busy-text>Importing…</span>
 		</p>
 	</form>
+</div><aside class="import-help"><p class="eyebrow">Good to know</p><h2>A simpler way to get started</h2>
 	<p class="muted">Select one or more UBS or Charles Schwab exports. The matching
 	importer is detected automatically for each file.</p>
 	<p class="muted">Foreign-currency amounts are converted to {{.BaseCurrency}} using
@@ -42,10 +44,10 @@
     Check their progress in <a href="/transactions?uncategorized=1">Transactions</a>.</p>
     {{else}}
     <p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
-	to auto-categorize with ✨ <strong>Categorize all</strong>, or enable background
+	to auto-categorize with <strong>Categorize all</strong>, or enable background
     categorization in <a href="/settings">Settings</a>.</p>
     {{end}}
-</section>
+</aside></section>
 
 <script>
 // Importing is a plain full-page POST that can run for a while (FX lookups and

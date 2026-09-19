@@ -1,8 +1,9 @@
 {{define "content"}}
-<div class="page-head"><h1>Accounts</h1></div>
+<div class="page-head"><div><p class="eyebrow">Workspace</p><h1>Accounts</h1><p class="page-description">Your accounts and currencies, together in one place.</p></div></div>
 <p class="muted">Accounts are also created automatically on import. Each account
 belongs to an institution and has its own currency.</p>
 
+<div class="table-scroll">
 <table class="list">
 	<thead><tr><th>Institution</th><th>Account</th><th>Currency</th></tr></thead>
 	<tbody>
@@ -12,12 +13,14 @@ belongs to an institution and has its own currency.</p>
 		{{if not .Accounts}}<tr><td colspan="3" class="muted">No accounts yet.</td></tr>{{end}}
 	</tbody>
 </table>
+</div>
 
-<h2>Add account</h2>
+<section class="form-panel"><h2>Add account</h2>
 <form method="post" action="/accounts" class="row-form">
-	<input name="institution" placeholder="Institution (e.g. UBS)" required>
-	<input name="name" placeholder="Account name" required>
-	<input name="currency" placeholder="CHF" maxlength="3" class="tiny" required>
-	<button type="submit">Add</button>
+	<label>Institution<input name="institution" placeholder="Institution (e.g. UBS)" required></label>
+	<label>Account name<input name="name" placeholder="Account name" required></label>
+	<label>Currency<input name="currency" placeholder="CHF" maxlength="3" class="tiny" required></label>
+	<button type="submit">Add account</button>
 </form>
+</section>
 {{end}}

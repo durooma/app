@@ -8,23 +8,30 @@
 	<script src="/static/htmx.min.js" defer></script>
 </head>
 <body>
-<header class="topbar">
-	<a class="brand" href="/">💰 Durooma</a>
-	<nav>
+<a class="skip-link" href="#main">Skip to content</a>
+<aside class="sidebar">
+	<a class="brand" href="/" aria-label="Durooma home"><span class="brand-mark" aria-hidden="true">d<span></span></span>Durooma<span class="brand-dot">.</span></a>
+	<nav aria-label="Main navigation">
 		{{$nav := .Nav}}
-		<a href="/reports" class="{{if eq $nav "reports"}}active{{end}}">Reports</a>
-		<a href="/transactions" class="{{if eq $nav "transactions"}}active{{end}}">Transactions</a>
-		<a href="/categories" class="{{if eq $nav "categories"}}active{{end}}">Categories</a>
-		<a href="/rules" class="{{if eq $nav "rules"}}active{{end}}">Rules</a>
-		<a href="/accounts" class="{{if eq $nav "accounts"}}active{{end}}">Accounts</a>
-		<a href="/import" class="{{if eq $nav "import"}}active{{end}}">Import</a>
-		<a href="/settings" class="{{if eq $nav "settings"}}active{{end}}">Settings</a>
+		<p class="nav-label">Workspace</p>
+		<a href="/reports" class="{{if eq $nav "reports"}}active{{end}}" {{if eq $nav "reports"}}aria-current="page"{{end}}>{{template "icon" "reports"}}<span>Reports</span></a>
+		<a href="/transactions" class="{{if eq $nav "transactions"}}active{{end}}" {{if eq $nav "transactions"}}aria-current="page"{{end}}>{{template "icon" "transactions"}}<span>Transactions</span></a>
+		<a href="/accounts" class="{{if eq $nav "accounts"}}active{{end}}" {{if eq $nav "accounts"}}aria-current="page"{{end}}>{{template "icon" "accounts"}}<span>Accounts</span></a>
+		<p class="nav-label">Organize</p>
+		<a href="/categories" class="{{if eq $nav "categories"}}active{{end}}" {{if eq $nav "categories"}}aria-current="page"{{end}}>{{template "icon" "categories"}}<span>Categories</span></a>
+		<a href="/rules" class="{{if eq $nav "rules"}}active{{end}}" {{if eq $nav "rules"}}aria-current="page"{{end}}>{{template "icon" "rules"}}<span>Rules</span></a>
+		<a href="/import" class="{{if eq $nav "import"}}active{{end}}" {{if eq $nav "import"}}aria-current="page"{{end}}>{{template "icon" "import"}}<span>Import</span></a>
+		<a href="/settings" class="{{if eq $nav "settings"}}active{{end}}" {{if eq $nav "settings"}}aria-current="page"{{end}}>{{template "icon" "settings"}}<span>Settings</span></a>
 	</nav>
-	<span class="base-ccy">{{.BaseCurrency}}</span>
-</header>
-<main>
-	{{template "content" .}}
-</main>
+	<div class="sidebar-foot"><span class="workspace-avatar" aria-hidden="true">D</span><div><strong>Personal workspace</strong><span>Your finances, in focus</span></div></div>
+</aside>
+<div class="app-shell">
+	<header class="topbar"><div class="workspace-crumb">Personal workspace <span>/</span> <strong>{{if eq .Nav "rules"}}Rules{{else if eq .Nav "reports"}}Reports{{else if eq .Nav "transactions"}}Transactions{{else if eq .Nav "accounts"}}Accounts{{else if eq .Nav "categories"}}Categories{{else if eq .Nav "import"}}Import{{else}}Settings{{end}}</strong></div><span class="base-ccy"><span>Base currency</span> <strong>{{.BaseCurrency}}</strong></span></header>
+	<main id="main" tabindex="-1" class="page-{{.Nav}}">
+		{{template "content" .}}
+		<footer class="page-foot"><span>Durooma</span><span>A clearer view of your finances.</span></footer>
+	</main>
+</div>
 {{template "cat-progress" .CatJob}}
 </body>
 </html>
@@ -80,3 +87,14 @@
 </div>
 {{- end -}}
 {{end}}
+
+{{define "icon"}}<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{if eq . "reports"}}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+{{else if eq . "transactions"}}<path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/>
+{{else if eq . "accounts"}}<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-13 5h3"/>
+{{else if eq . "categories"}}<path d="M3 4h8l10 10-7 7L3 10Z"/><circle cx="7.5" cy="8" r=".8"/>
+{{else if eq . "rules"}}<path d="M5 3v12a4 4 0 0 0 4 4h10M5 7h14m-4-4 4 4-4 4m0 4 4 4-4 4"/>
+{{else if eq . "import"}}<path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/>
+{{else if eq . "settings"}}<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>
+{{else if eq . "arrow"}}<path d="M7 17 17 7M7 7h10v10"/>
+{{else if eq . "plus"}}<path d="M12 5v14M5 12h14"/>
+{{else if eq . "sparkles"}}<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 2v4m-2-2h4"/>{{end}}</svg>{{end}}

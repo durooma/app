@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="page-head">
-	<h1>Transactions</h1>
+	<div><p class="eyebrow">Activity</p><h1>Transactions</h1><p class="page-description">Every account. Every currency. One clear view.</p></div>
 	{{if .AIEnabled}}
 	{{/* Posted through htmx so the answer (the progress bar) swaps into the
 	     bottom bar instead of reloading the page: the run itself continues in
@@ -18,7 +18,7 @@
 		<input type="hidden" name="period" value="{{index $f "period"}}">
 		<input type="hidden" name="sign" value="{{index $f "sign"}}">
 		<input type="hidden" name="q" value="{{index $f "q"}}">
-		<button type="submit" title="Auto-categorize every uncategorized transaction matching the current filter">✨ Categorize all</button>
+		<button type="submit" title="Auto-categorize every uncategorized transaction matching the current filter">{{template "icon" "sparkles"}} Categorize all</button>
 	</form>
 	{{end}}
 </div>
@@ -31,25 +31,25 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 {{end}}
 <form method="get" action="/transactions" class="filters">
 	{{$f := .Filter}}
-	<select name="institution_id">
+	<select aria-label="Institution" name="institution_id">
 		<option value="0">All institutions</option>
 		{{range .Institutions}}<option value="{{.ID}}" {{if eq .ID (index $f "institution_id")}}selected{{end}}>{{.Name}}</option>{{end}}
 	</select>
-	<select name="account_id">
+	<select aria-label="Account" name="account_id">
 		<option value="0">All accounts</option>
 		{{range .Accounts}}<option value="{{.ID}}" {{if eq .ID (index $f "account_id")}}selected{{end}}>{{.InstitutionName}} · {{.Name}} ({{.Currency}})</option>{{end}}
 	</select>
-	<select name="category_id">
+	<select aria-label="Category" name="category_id">
 		<option value="0">All categories</option>
 		{{range .Categories}}<option value="{{.ID}}" {{if eq .ID (index $f "category_id")}}selected{{end}}>{{.Name}}</option>{{end}}
 	</select>
 	<label class="chk"><input type="checkbox" name="uncategorized" value="1" {{if index $f "uncategorized"}}checked{{end}}> Uncategorized</label>
-	<input type="date" name="from" value="{{index $f "from"}}">
-	<input type="date" name="to" value="{{index $f "to"}}">
+	<input aria-label="From date" type="date" name="from" value="{{index $f "from"}}">
+	<input aria-label="To date" type="date" name="to" value="{{index $f "to"}}">
 	{{/* period/sign come from report drill-downs; keep them across manual re-filtering */}}
 	<input type="hidden" name="period" value="{{index $f "period"}}">
 	<input type="hidden" name="sign" value="{{index $f "sign"}}">
-	<input type="search" name="q" placeholder="Search description" value="{{index $f "q"}}">
+	<input aria-label="Search description" type="search" name="q" placeholder="Search description" value="{{index $f "q"}}">
 	<button type="submit">Filter</button>
 	<a href="/transactions" class="btn-link">Reset</a>
 </form>
@@ -65,7 +65,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 </div>
 {{end}}
 
-<p class="muted">{{len .Transactions}} shown · net {{money .Total}} {{.BaseCurrency}}{{if .PeriodActive}} · <strong>{{money .AllocTotal}}</strong> allocated to this period{{end}}</p>
+<p class="results-summary"><strong>{{len .Transactions}}</strong> shown · net {{money .Total}} {{.BaseCurrency}}{{if .PeriodActive}} · <strong>{{money .AllocTotal}}</strong> allocated to this period{{end}}</p>
 
 <div class="table-scroll">
 <table class="txns">
@@ -73,7 +73,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 		<tr>
 			<th>Date</th><th>Account</th><th>Description</th>
 			<th class="num">Amount</th><th class="num">{{.BaseCurrency}}</th>
-			<th>Category</th><th>Month(s)</th><th></th>
+			<th>Category</th><th>Month(s)</th><th><span class="sr-only">Actions</span></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -100,30 +100,30 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 <tr>
 	<td class="nowrap">{{date $tx.Date}}</td>
 	<td class="nowrap"><span class="pill">{{$tx.Institution}}</span> {{$tx.AccountName}}</td>
-	<td>{{$tx.Description}}{{if $tx.Note}}<br><small class="muted">{{$tx.Note}}</small>{{end}}</td>
+	<td class="txn-description">{{$tx.Description}}{{if $tx.Note}}<br><small class="muted">{{$tx.Note}}</small>{{end}}</td>
 	<td class="num nowrap">{{money $tx.Amount}} {{$tx.Currency}}</td>
 	<td class="num nowrap {{signclass $tx.BaseAmount}}">{{money $tx.BaseAmount}}{{if and .PeriodActive $tx.Amortized}}<br><small class="muted drill-share">→ {{money (index .Alloc $tx.ID)}} this period</small>{{end}}</td>
 	<td>
-		<select name="category_id" hx-post="/transactions/{{$tx.ID}}/category" hx-swap="none" hx-trigger="change">
+		<select aria-label="Category" name="category_id" hx-post="/transactions/{{$tx.ID}}/category" hx-swap="none" hx-trigger="change">
 			<option value="0">—</option>
 			{{range .Cats}}<option value="{{.ID}}" {{if eq .ID $tx.CatID}}selected{{end}}>{{.Name}}</option>{{end}}
 		</select>
 		{{if and .AIEnabled (not $tx.CategoryID)}}
 		<button class="auto-cat" title="Auto-categorize this transaction"
 			hx-post="/transactions/{{$tx.ID}}/categorize"
-			hx-target="#cat-progress" hx-swap="outerHTML">✨</button>
+			hx-target="#cat-progress" hx-swap="outerHTML">{{template "icon" "sparkles"}}</button>
 		{{end}}
 	</td>
 	<td class="nowrap">
 		<form method="post" action="/transactions/{{$tx.ID}}/months" class="months">
-			<input type="month" name="start_month" value="{{monthval $tx.StartMonth}}">
-			<input type="month" name="end_month" value="{{monthval $tx.EndMonth}}">
+			<input aria-label="Start month" type="month" name="start_month" value="{{monthval $tx.StartMonth}}">
+			<input aria-label="End month" type="month" name="end_month" value="{{monthval $tx.EndMonth}}">
 			<button type="submit" title="Assign to this month or range">✓</button>
 			{{if $tx.Amortized}}<span class="pill amort" title="Amortized over {{$tx.MonthSpan}} months">÷{{$tx.MonthSpan}}</span>{{end}}
 		</form>
 	</td>
 	<td>
-		<button class="del" hx-post="/transactions/{{$tx.ID}}/delete"
+		<button class="del" aria-label="Delete transaction" hx-post="/transactions/{{$tx.ID}}/delete"
 			hx-target="closest tr" hx-swap="outerHTML"
 			hx-confirm="Delete this transaction?">✕</button>
 	</td>

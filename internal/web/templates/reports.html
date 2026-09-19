@@ -3,30 +3,32 @@
 {{$subs := .Subs}}
 
 <div class="page-head">
-	<h1>{{$p.Label}}</h1>
+	<div><p class="eyebrow">Your financial picture</p><h1>{{if $p.IsAll}}Financial overview{{else}}{{$p.Label}}{{end}}</h1><p class="page-description">Understand what comes in, what goes out, and what stays.</p></div>
 	{{/* At the widest scope the trail is just the title again, so skip it. */}}
 	{{if not $p.IsAll}}
 	<nav class="crumbs" aria-label="Report scope">
 		{{range $i, $c := .Crumbs}}{{if $i}}<span class="sep">›</span>{{end}}{{if $c.Current}}<span class="here">{{$c.Label}}</span>{{else}}<a href="{{$c.URL}}">{{$c.Label}}</a>{{end}}{{end}}
 	</nav>
 	{{end}}
+	<a class="button secondary head-action" href="/import">{{template "icon" "plus"}} Import statement</a>
 </div>
+<div class="report-context"><span class="period-label">{{template "icon" "reports"}} {{$p.Label}}</span><span>All accounts <span aria-hidden="true">·</span> Amounts in {{.BaseCurrency}}</span></div>
 
 {{with .Totals}}
 <div class="cards">
-	<div class="card pos"><span>Income</span><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=income">{{money .Income}}</a></strong></div>
-	<div class="card neg"><span>Expenses</span><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=expense">{{money .Expense}}</a></strong></div>
-	<div class="card"><span>Balance</span><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{$p.Param}}">{{money .Net}}</a></strong></div>
+	<div class="card pos"><div class="card-label"><span>Total income</span><span class="metric-icon" aria-hidden="true">↙</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=income">{{money .Income}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money received</span><span aria-hidden="true">↗</span></div></div>
+	<div class="card neg"><div class="card-label"><span>Total expenses</span><span class="metric-icon" aria-hidden="true">↗</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=expense">{{money .Expense}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money spent</span><span aria-hidden="true">↗</span></div></div>
+	<div class="card balance"><div class="card-label"><span>Net balance</span><span class="metric-icon" aria-hidden="true">=</span></div><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{$p.Param}}">{{money .Net}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Income less expenses</span><span aria-hidden="true">↗</span></div></div>
 </div>
 {{end}}
 
 <div class="{{if not $subs}}two-col{{end}}">
 	<section>
-		<h2>Income by category</h2>
+		<div class="section-head"><div><h2>Income by category</h2><p class="section-description">Where your money comes from</p></div><span class="section-tag">Income</span></div>
 		{{template "breakdown" dict "Rows" .Income "Subs" $subs "Period" $p "Sign" "income" "Empty" "No income recorded."}}
 	</section>
 	<section>
-		<h2>Expenses by category</h2>
+		<div class="section-head"><div><h2>Expenses by category</h2><p class="section-description">Where your money goes</p></div><span class="section-tag">Expenses</span></div>
 		{{template "breakdown" dict "Rows" .Expense "Subs" $subs "Period" $p "Sign" "expense" "Empty" "No expenses recorded."}}
 	</section>
 </div>
@@ -34,7 +36,7 @@
 {{if $subs}}
 <section>
 	<h2>{{if $p.IsAll}}By year{{else}}By month{{end}}</h2>
-	<table class="grid subs">
+	<div class="table-scroll"><table class="grid subs">
 		<thead>
 			<tr>
 				<th>{{if $p.IsAll}}Year{{else}}Month{{end}}</th>
@@ -51,7 +53,7 @@
 			</tr>
 			{{end}}
 		</tbody>
-	</table>
+	</table></div>
 </section>
 {{end}}
 
