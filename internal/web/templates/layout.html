@@ -18,11 +18,65 @@
 		<a href="/rules" class="{{if eq $nav "rules"}}active{{end}}">Rules</a>
 		<a href="/accounts" class="{{if eq $nav "accounts"}}active{{end}}">Accounts</a>
 		<a href="/import" class="{{if eq $nav "import"}}active{{end}}">Import</a>
+		<a href="/settings" class="{{if eq $nav "settings"}}active{{end}}">Settings</a>
 	</nav>
 	<span class="base-ccy">{{.BaseCurrency}}</span>
 </header>
 <main>
 	{{template "content" .}}
 </main>
+{{template "cat-progress" .CatJob}}
 </body>
 </html>
+
+{{/* Bottom-of-screen progress for the background "Categorize all" run. Rendered
+     server-side on every page load so the bar survives navigation, then
+     re-fetched by htmx once a second while the run is active — an idle app
+     polls nothing. The element is always present, hidden when there is nothing
+     to report, so every swap has a stable target and runs cannot stack up two
+     bars. */}}
+{{define "cat-progress"}}
+{{- if not . -}}
+<div id="cat-progress" class="cat-progress" hidden></div>
+{{- else -}}
+<div id="cat-progress" class="cat-progress" role="status" aria-live="polite"
+	{{- if .Active}} hx-get="/transactions/categorize/status" hx-trigger="every 1s" hx-swap="outerHTML"{{end}}>
+	<div class="track">
+		<span class="fill{{if .Aborted}} aborted{{else if .Err}} failed{{else if not .Active}} done{{end}}"
+			style="width: {{.Percent}}%"></span>
+	</div>
+	<div class="meta">
+		{{if .Active}}
+			<span class="spinner"></span>
+			{{if .Aborting}}
+				<span class="msg">Aborting after the current batch…</span>
+			{{else}}
+				<span class="msg">Categorizing with <strong>{{.Provider}}</strong> — {{.Done}} of {{.Total}} (requests paced to the shared budget)</span>
+			{{end}}
+			<button class="abort" {{if .Aborting}}disabled{{end}}
+				hx-post="/transactions/categorize/abort"
+				hx-target="#cat-progress" hx-swap="outerHTML">Abort</button>
+		{{else}}
+			<span class="msg">
+				{{- if .Err}}Categorization failed: {{.Err}}
+				{{- else if .Aborted}}Aborted — {{.Done}} of {{.Total}} processed
+					({{.Report.ByRules}} by rules, {{.Report.ByAI}} by AI). Categories written so far were kept.
+				{{- else if eq .Report.Total 0}}Nothing to categorize.
+				{{- else}}Categorized {{.Report.Total}} transactions with <strong>{{.Report.Provider}}</strong> —
+					{{.Report.ByRules}} by rules, {{.Report.ByAI}} by AI, {{.Report.Unresolved}} left unresolved.
+				{{- end}}
+				{{- /* Whatever the run did not get to — the query bound, plus anything
+				       it failed to resolve — so hitting the bound is never silent. */}}
+				{{- if .Remaining}} <strong>{{.Remaining}}</strong> still uncategorized; run again to continue.{{end}}
+			</span>
+			{{/* An empty href reloads the current URL, so the table below picks
+			     up the categories the run just wrote — no JS needed. */}}
+			<a class="reload" href="">Reload</a>
+			<button class="dismiss" title="Dismiss"
+				hx-post="/transactions/categorize/dismiss"
+				hx-target="#cat-progress" hx-swap="outerHTML">✕</button>
+		{{end}}
+	</div>
+</div>
+{{- end -}}
+{{end}}

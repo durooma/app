@@ -2,18 +2,26 @@ package web
 
 import (
 	"context"
+	"durooma/internal/store"
 	"net/http"
 	"strconv"
 )
 
 // base builds the common template data shared by every page (nav state and base
-// currency).
+// currency), plus any in-flight categorization run so its progress bar is
+// rendered server-side on whichever page the user happens to be on.
 func (s *Server) base(ctx context.Context, title, active string) map[string]any {
+	enabled, err := s.store.BackgroundCategorizationEnabled(ctx, store.LocalUserID)
+	if err != nil {
+		enabled = false
+	}
 	return map[string]any{
-		"Title":        title,
-		"Nav":          active,
-		"BaseCurrency": s.cfg.BaseCurrency,
-		"AIProvider":   s.cfg.AIProvider,
+		"Title":              title,
+		"Nav":                active,
+		"BaseCurrency":       s.cfg.BaseCurrency,
+		"AIProvider":         s.cfg.AIProvider,
+		"AutoCategorization": enabled && s.cfg.AIReady(),
+		"CatJob":             s.catJob.status(),
 	}
 }
 

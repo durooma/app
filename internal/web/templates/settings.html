@@ -1,0 +1,49 @@
+{{define "content"}}
+<div class="page-head"><h1>Settings</h1></div>
+{{if .Saved}}<div class="alert ok" role="status">Settings saved.</div>{{end}}
+<section>
+    <h2>Categorization</h2>
+    <form method="post" action="/settings" class="stack">
+        <label for="background-categorization">Background categorization
+            <select id="background-categorization" name="background_categorization" aria-describedby="background-help">
+                <option value="" {{if not .BackgroundEnabled}}selected{{end}}>Off</option>
+                <option value="on" {{if .BackgroundEnabled}}selected{{end}}>On</option>
+            </select>
+        </label>
+        <p id="background-help" class="muted">Automatically categorize uncategorized transactions, including new imports, while the server is running. Off by default.</p>
+        {{if not .AIReady}}<p class="muted">AI is not configured. You can save this preference now; automatic processing can start once an AI provider and API key are configured.</p>{{end}}
+        <p class="muted">Turning this off stops automatic processing and keeps completed categories. You can still start categorization manually.</p>
+        <button type="submit">Save settings</button>
+    </form>
+    {{if .BackgroundEnabled}}{{template "categorization-coverage" .Coverage}}{{end}}
+</section>
+{{end}}
+
+
+{{define "categorization-coverage"}}
+{{if .}}
+<section id="categorization-coverage" class="coverage" aria-labelledby="coverage-title"
+    hx-get="/settings/categorization-coverage" hx-trigger="every 5s" hx-swap="outerHTML">
+    <h2 id="coverage-title">Categorization coverage</h2>
+    <div role="status" aria-live="polite" aria-atomic="true">
+        {{if .Total}}
+        <div class="coverage-summary">
+            <span><strong>{{.Categorized}}</strong> of <strong>{{.Total}}</strong> transactions categorized</span>
+            <strong>{{printf "%.1f" .Percent}}%</strong>
+        </div>
+        <progress value="{{.Categorized}}" max="{{.Total}}" aria-label="Transactions with a category assigned">{{printf "%.1f" .Percent}}%</progress>
+        {{if .Remaining}}
+        <p class="muted"><a href="/transactions?uncategorized=1">{{.Remaining}} still uncategorized</a></p>
+        {{else}}
+        <p class="muted">All transactions have a category assigned.</p>
+        {{end}}
+        {{else}}
+        <p class="muted">No transactions yet. Coverage will appear here once you <a href="/import">import transactions</a>.</p>
+        {{end}}
+    </div>
+    <p class="muted">Includes categories assigned manually, by rules, and by AI. Updates automatically every 5 seconds.</p>
+</section>
+{{else}}
+<div id="categorization-coverage" hidden></div>
+{{end}}
+{{end}}

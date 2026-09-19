@@ -37,8 +37,14 @@
 	its own header. A name entered above is applied to <em>every</em> file in the
 	upload, which merges them into one account. Equity Awards grants are recorded at
 	vest value; sales record only the resulting gain or loss.</p>
-	<p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
-	to auto-categorize with ✨ <strong>Categorize all</strong>.</p>
+	{{if .AutoCategorization}}
+    <p class="muted">New transactions will be categorized automatically in the background.
+    Check their progress in <a href="/transactions?uncategorized=1">Transactions</a>.</p>
+    {{else}}
+    <p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
+	to auto-categorize with ✨ <strong>Categorize all</strong>, or enable background
+    categorization in <a href="/settings">Settings</a>.</p>
+    {{end}}
 </section>
 
 <script>

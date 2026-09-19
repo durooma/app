@@ -1,7 +1,10 @@
 .PHONY: run build test tidy docker-up docker-down fmt vet
 
-# Local dev: expects a Postgres reachable at the default DATABASE_URL.
+# Local dev: load .env for the database connection and provider settings.
 run:
+	@set -a; \
+	if [ -f .env ]; then . ./.env; fi; \
+	set +a; \
 	go run ./cmd/server
 
 build:

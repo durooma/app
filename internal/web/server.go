@@ -19,20 +19,25 @@ type Server struct {
 	ai        *ai.Service
 	fx        *fx.Converter
 	templates *templates
+
+	// catJob holds the background "categorize all" run, if any.
+	catJob     catJob
+	background *ai.BackgroundControl
 }
 
-func NewServer(cfg *config.Config, st *store.Store, imp *importer.Importer, aiSvc *ai.Service, conv *fx.Converter) (*Server, error) {
+func NewServer(cfg *config.Config, st *store.Store, imp *importer.Importer, aiSvc *ai.Service, conv *fx.Converter, background *ai.BackgroundControl) (*Server, error) {
 	tmpls, err := loadTemplates()
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		cfg:       cfg,
-		store:     st,
-		importer:  imp,
-		ai:        aiSvc,
-		fx:        conv,
-		templates: tmpls,
+		cfg:        cfg,
+		store:      st,
+		importer:   imp,
+		ai:         aiSvc,
+		fx:         conv,
+		templates:  tmpls,
+		background: background,
 	}, nil
 }
 
@@ -50,11 +55,19 @@ func (s *Server) Handler() http.Handler {
 	// Unified transaction view
 	mux.HandleFunc("GET /transactions", s.handleTransactions)
 	mux.HandleFunc("POST /transactions/categorize", s.handleCategorizeAll)
+	mux.HandleFunc("GET /transactions/categorize/status", s.handleCategorizeStatus)
+	mux.HandleFunc("POST /transactions/categorize/abort", s.handleCategorizeAbort)
+	mux.HandleFunc("POST /transactions/categorize/dismiss", s.handleCategorizeDismiss)
 	mux.HandleFunc("POST /transactions/{id}/categorize", s.handleCategorizeOne)
 	mux.HandleFunc("POST /transactions/{id}/category", s.handleSetCategory)
 	mux.HandleFunc("POST /transactions/{id}/months", s.handleSetMonths)
 	mux.HandleFunc("POST /transactions/{id}/note", s.handleSetNote)
 	mux.HandleFunc("POST /transactions/{id}/delete", s.handleDeleteTransaction)
+
+	// User preferences
+	mux.HandleFunc("GET /settings", s.handleSettings)
+	mux.HandleFunc("GET /settings/categorization-coverage", s.handleCategorizationCoverage)
+	mux.HandleFunc("POST /settings", s.handleSaveSettings)
 
 	// Categories
 	mux.HandleFunc("GET /categories", s.handleCategories)

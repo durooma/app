@@ -32,15 +32,19 @@ type TxnFilter struct {
 	Offset int
 }
 
-const txnSelect = `
-	SELECT t.id, t.account_id, a.name, i.name, t.txn_date, t.description,
-	       t.amount, t.currency, t.base_amount, t.base_currency,
-	       t.category_id, COALESCE(c.name, ''), t.start_month, t.end_month,
-	       t.external_hash, t.source, t.note
+// txnFrom is shared by the listing and counting queries so the two can never
+// disagree about which transactions a filter matches.
+const txnFrom = `
 	FROM transactions t
 	JOIN accounts a ON a.id = t.account_id
 	JOIN institutions i ON i.id = a.institution_id
 	LEFT JOIN categories c ON c.id = t.category_id`
+
+const txnSelect = `
+	SELECT t.id, t.account_id, a.name, i.name, t.txn_date, t.description,
+	       t.amount, t.currency, t.base_amount, t.base_currency,
+	       t.category_id, COALESCE(c.name, ''), t.start_month, t.end_month,
+	       t.external_hash, t.source, t.note` + txnFrom
 
 func scanTxn(rows interface {
 	Scan(...any) error
@@ -53,9 +57,9 @@ func scanTxn(rows interface {
 	return t, err
 }
 
-func (s *Store) ListTransactions(ctx context.Context, f TxnFilter) ([]models.Transaction, error) {
-	var where []string
-	var args []any
+// txnWhere renders a filter's conditions and their arguments. Limit and Offset
+// are not part of it: they shape a page of results, not the matching set.
+func txnWhere(f TxnFilter) (where []string, args []any) {
 	add := func(cond string, val any) {
 		args = append(args, val)
 		where = append(where, fmt.Sprintf(cond, len(args)))
@@ -91,11 +95,21 @@ func (s *Store) ListTransactions(ctx context.Context, f TxnFilter) ([]models.Tra
 	if strings.TrimSpace(f.Search) != "" {
 		add("t.description ILIKE '%%' || $%d || '%%'", strings.TrimSpace(f.Search))
 	}
+	return where, args
+}
 
-	q := txnSelect
-	if len(where) > 0 {
-		q += "\nWHERE " + strings.Join(where, " AND ")
+// whereClause joins rendered conditions into a SQL WHERE, or nothing at all.
+func whereClause(where []string) string {
+	if len(where) == 0 {
+		return ""
 	}
+	return "\nWHERE " + strings.Join(where, " AND ")
+}
+
+func (s *Store) ListTransactions(ctx context.Context, f TxnFilter) ([]models.Transaction, error) {
+	where, args := txnWhere(f)
+
+	q := txnSelect + whereClause(where)
 	q += "\nORDER BY t.txn_date DESC, t.id DESC"
 	if f.Limit > 0 {
 		args = append(args, f.Limit)
@@ -120,6 +134,16 @@ func (s *Store) ListTransactions(ctx context.Context, f TxnFilter) ([]models.Tra
 		out = append(out, t)
 	}
 	return out, rows.Err()
+}
+
+// CountTransactions reports how many transactions match the filter, ignoring
+// Limit and Offset. It lets a caller that works on a bounded page still tell
+// the user how much is left behind it.
+func (s *Store) CountTransactions(ctx context.Context, f TxnFilter) (int, error) {
+	where, args := txnWhere(f)
+	var n int
+	err := s.pool.QueryRow(ctx, "SELECT count(*)"+txnFrom+whereClause(where), args...).Scan(&n)
+	return n, err
 }
 
 func (s *Store) GetTransaction(ctx context.Context, id int64) (models.Transaction, error) {

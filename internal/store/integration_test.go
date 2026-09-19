@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"os"
 	"testing"
@@ -227,5 +228,83 @@ func TestInsertDedup(t *testing.T) {
 	}
 	if n3 != 1 {
 		t.Errorf("same external hash in a different account inserted %d, want 1", n3)
+	}
+}
+
+// TestCountTransactionsMatchesListing pins the property the categorization bar
+// depends on: the count answers "how many match" for the same filter that
+// listing pages through, so a bounded run can honestly report the remainder.
+func TestCountTransactionsMatchesListing(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(t)
+	defer pool.Close()
+	st := New(pool)
+
+	acct, err := st.CreateAccount(ctx, "UBS", "Main", "CHF")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var groceries int64
+	if err := pool.QueryRow(ctx, `SELECT id FROM categories WHERE name='Groceries'`).Scan(&groceries); err != nil {
+		t.Fatal(err)
+	}
+	for i := range 10 {
+		var cat *int64
+		if i < 4 { // four are already categorized
+			cat = &groceries
+		}
+		if _, err := pool.Exec(ctx, `
+			INSERT INTO transactions
+			  (account_id, txn_date, description, amount, currency, base_amount, base_currency,
+			   category_id, start_month, end_month, external_hash, source)
+			VALUES ($1, $2, $3, -10, 'CHF', -10, 'CHF', $4, $2, $2, $5, 'test')`,
+			acct, mon(2024, time.June), fmt.Sprintf("Migros %d", i), cat,
+			fmt.Sprintf("count-hash-%d", i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	f := TxnFilter{Uncategorized: true}
+	total, err := st.CountTransactions(ctx, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total != 6 {
+		t.Fatalf("count = %d, want the 6 uncategorized", total)
+	}
+
+	// A limit bounds the page but must not change what the count reports —
+	// that difference is exactly the "still uncategorized" figure.
+	bounded := f
+	bounded.Limit = 4
+	page, err := st.ListTransactions(ctx, bounded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page) != 4 {
+		t.Errorf("listed %d transactions, want the 4 the limit allows", len(page))
+	}
+	again, err := st.CountTransactions(ctx, bounded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again != total {
+		t.Errorf("count with a limit = %d, want %d: Limit must not shrink the matching set", again, total)
+	}
+
+	// The count tracks the filter, not just the table.
+	all, err := st.CountTransactions(ctx, TxnFilter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if all != 10 {
+		t.Errorf("unfiltered count = %d, want 10", all)
+	}
+	searched, err := st.CountTransactions(ctx, TxnFilter{Uncategorized: true, Search: "Migros 9"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searched != 1 {
+		t.Errorf("searched count = %d, want 1", searched)
 	}
 }

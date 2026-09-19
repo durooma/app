@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -70,11 +71,20 @@ same order. Use exactly the category names given above. Example: ["Dining","Tran
 
 	resp, err := g.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gemini: request failed")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("gemini: status %d", resp.StatusCode)
+		retry := time.Duration(0)
+		if seconds, err := strconv.Atoi(resp.Header.Get("Retry-After")); err == nil {
+			retry = time.Duration(max(0, seconds)) * time.Second
+		} else if at, err := http.ParseTime(resp.Header.Get("Retry-After")); err == nil {
+			retry = max(0, time.Until(at))
+		}
+		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			retry = max(retry, time.Hour)
+		}
+		return nil, &APIError{Status: resp.StatusCode, RetryAfter: retry}
 	}
 
 	var parsed struct {
@@ -101,6 +111,9 @@ same order. Use exactly the category names given above. Example: ["Dining","Tran
 	var names []string
 	if err := json.Unmarshal([]byte(text), &names); err != nil {
 		return nil, fmt.Errorf("gemini: could not parse JSON array: %w", err)
+	}
+	if len(names) != len(items) {
+		return nil, fmt.Errorf("gemini: expected %d categories, got %d", len(items), len(names))
 	}
 	return names, nil
 }

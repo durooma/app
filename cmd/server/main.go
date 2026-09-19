@@ -53,12 +53,27 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	aiSvc := ai.NewService(st, provider)
+	paced := ai.NewPacedProvider(provider, st, cfg.AIRequestInterval, cfg.AIRequestsPerDay)
+	aiSvc := ai.NewServiceWithBatchSize(st, paced, cfg.AIBatchSize)
 
-	srv, err := web.NewServer(cfg, st, imp, aiSvc, conv)
+	background := ai.NewBackgroundControl(func(ctx context.Context) (bool, error) {
+		if !cfg.AIReady() {
+			return false, nil
+		}
+		return st.BackgroundCategorizationEnabled(ctx, store.LocalUserID)
+	}, func(ctx context.Context) {
+		ai.RunBackground(ctx, st, aiSvc, cfg.AIPollInterval)
+	}, cfg.AIPollInterval)
+
+	srv, err := web.NewServer(cfg, st, imp, aiSvc, conv, background)
 	if err != nil {
 		return err
 	}
+
+	workerCtx, stopWorker := context.WithCancel(ctx)
+	workerDone := make(chan struct{})
+	go func() { defer close(workerDone); background.Run(workerCtx) }()
+	defer func() { stopWorker(); <-workerDone }()
 
 	httpServer := &http.Server{
 		Addr:              cfg.HTTPAddr,

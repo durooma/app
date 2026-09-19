@@ -2,7 +2,12 @@
 <div class="page-head">
 	<h1>Transactions</h1>
 	{{if .AIEnabled}}
-	<form method="post" action="/transactions/categorize" class="inline">
+	{{/* Posted through htmx so the answer (the progress bar) swaps into the
+	     bottom bar instead of reloading the page: the run itself continues in
+	     the background well after this request returns. method/action keep it
+	     working if htmx fails to load. */}}
+	<form method="post" action="/transactions/categorize" class="inline"
+		hx-post="/transactions/categorize" hx-target="#cat-progress" hx-swap="outerHTML">
 		{{$f := .Filter}}
 		<input type="hidden" name="institution_id" value="{{index $f "institution_id"}}">
 		<input type="hidden" name="account_id" value="{{index $f "account_id"}}">
@@ -18,13 +23,12 @@
 	{{end}}
 </div>
 
-{{with .Report}}
-<div class="alert ok">
-	Categorized {{.Total}} transactions with <strong>{{.Provider}}</strong> —
-	{{.ByRules}} by rules, {{.ByAI}} by AI, {{.Unresolved}} left unresolved.
-</div>
+{{if .AutoCategorization}}
+<p class="muted">Uncategorized transactions are processed automatically in the background.
+You can keep browsing and reload to see new categories. Manual runs share the same request budget. <a href="/settings">Settings</a></p>
+{{else}}
+<p class="muted">To categorize transactions automatically, enable background categorization in <a href="/settings">Settings</a>.</p>
 {{end}}
-
 <form method="get" action="/transactions" class="filters">
 	{{$f := .Filter}}
 	<select name="institution_id">
@@ -107,7 +111,7 @@
 		{{if and .AIEnabled (not $tx.CategoryID)}}
 		<button class="auto-cat" title="Auto-categorize this transaction"
 			hx-post="/transactions/{{$tx.ID}}/categorize"
-			hx-target="closest tr" hx-swap="outerHTML">✨</button>
+			hx-target="#cat-progress" hx-swap="outerHTML">✨</button>
 		{{end}}
 	</td>
 	<td class="nowrap">

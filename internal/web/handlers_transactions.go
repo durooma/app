@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -124,41 +125,72 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 	s.templates.render(w, "transactions", data)
 }
 
-// handleCategorizeAll auto-categorizes every uncategorized transaction matching
-// the current filter, then re-renders the page with a summary report. Existing
-// categorizations are left untouched by the AI service.
-func (s *Server) handleCategorizeAll(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+// maxCategorizeRun bounds how many transactions one run pulls into memory. It
+// is applied as a query limit rather than by discarding rows already loaded, so
+// the bound actually saves the memory it is there to save on a small host.
+// Anything beyond it is reported as still uncategorized, not silently dropped.
+const maxCategorizeRun = 5000
 
+// handleCategorizeAll starts a background run over the uncategorized
+// transactions matching the current filter and returns the progress bar. The
+// run is a provider round trip per batch, so it outlives this request rather
+// than holding it open; the bar polls handleCategorizeStatus for the outcome.
+// Existing categorizations are left untouched by the AI service.
+func (s *Server) handleCategorizeAll(w http.ResponseWriter, r *http.Request) {
 	// Categorize across the whole matching set (not just the current page) but
 	// only the still-uncategorized ones.
 	catFilter := txnFilterFromRequest(r)
 	catFilter.Uncategorized = true
-	catFilter.Limit = 0
+	catFilter.Limit = maxCategorizeRun
 	catFilter.Offset = 0
 
-	txns, err := s.store.ListTransactions(ctx, catFilter)
+	txns, err := s.store.ListTransactions(r.Context(), catFilter)
 	if err != nil {
 		s.fail(w, err)
 		return
 	}
-	report, err := s.ai.Categorize(ctx, txns)
-	if err != nil {
-		s.fail(w, err)
+	run := catRun{
+		svc:  s.ai,
+		txns: txns,
+		remaining: func(ctx context.Context) (int, error) {
+			return s.store.CountTransactions(ctx, catFilter)
+		},
+	}
+	if !s.catJob.start(run) {
+		// A run is already in flight and its bar is already on screen; 204
+		// tells htmx to leave the page alone rather than adding a second one.
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-
-	data, err := s.transactionsData(r, txnFilterFromRequest(r))
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	data["Report"] = report
-	s.templates.render(w, "transactions", data)
+	s.renderCatProgress(w)
 }
 
-// handleCategorizeOne auto-categorizes a single transaction (no-op if it is
-// already categorized) and returns the re-rendered row for an HTMX swap.
+// handleCategorizeStatus serves the progress bar that the bar itself polls.
+func (s *Server) handleCategorizeStatus(w http.ResponseWriter, r *http.Request) {
+	s.renderCatProgress(w)
+}
+
+// handleCategorizeAbort stops the running job. Work already committed stays:
+// aborting halts the run, it does not roll back the categories written so far.
+func (s *Server) handleCategorizeAbort(w http.ResponseWriter, r *http.Request) {
+	s.catJob.abort()
+	s.renderCatProgress(w)
+}
+
+// handleCategorizeDismiss clears a finished run's summary bar.
+func (s *Server) handleCategorizeDismiss(w http.ResponseWriter, r *http.Request) {
+	s.catJob.dismiss()
+	s.renderCatProgress(w)
+}
+
+// renderCatProgress writes the progress bar fragment. With no job to report it
+// writes nothing, which an outerHTML swap turns into removing the bar.
+func (s *Server) renderCatProgress(w http.ResponseWriter) {
+	s.templates.renderPartial(w, "transactions", "cat-progress", s.catJob.status())
+}
+
+// handleCategorizeOne uses the background job too: even one transaction may
+// need to wait for the shared quota, so it must not hold an HTTP request open.
 func (s *Server) handleCategorizeOne(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := int64PathValue(r, "id")
@@ -171,22 +203,8 @@ func (s *Server) handleCategorizeOne(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	if _, err := s.ai.Categorize(ctx, []models.Transaction{txn}); err != nil {
-		s.fail(w, err)
-		return
-	}
-	// Reload so the returned row reflects the freshly written category.
-	txn, err = s.store.GetTransaction(ctx, id)
-	if err != nil {
-		s.fail(w, err)
-		return
-	}
-	categories, _ := s.store.ListCategories(ctx)
-	s.templates.renderPartial(w, "transactions", "txn-row", map[string]any{
-		"T":         txn,
-		"Cats":      categories,
-		"AIEnabled": s.cfg.AIEnabled(),
-	})
+	s.catJob.start(catRun{svc: s.ai, txns: []models.Transaction{txn}})
+	s.renderCatProgress(w)
 }
 
 func (s *Server) handleSetCategory(w http.ResponseWriter, r *http.Request) {
