@@ -15,7 +15,7 @@ func TestBackgroundConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.AIReady() || cfg.AIBatchSize != 30 || cfg.AIRequestsPerDay != 200 || cfg.AIPollInterval != 30*time.Second {
+	if !cfg.AIReady() || cfg.AIBatchSize != 30 || cfg.AIRequestsPerDay != 1500 || cfg.AIRequestInterval != 57600*time.Millisecond || cfg.AIPollInterval != 30*time.Second {
 		t.Fatal("incorrect background defaults")
 	}
 	for _, provider := range []string{"none", "disabled"} {

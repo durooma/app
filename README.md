@@ -71,8 +71,8 @@ DUROOMA_TEST_DB=postgres://durooma:durooma@localhost:5433/durooma?sslmode=disabl
 | `AI_MODEL` | `gemini-3.1-flash-lite` | Model id |
 | `AI_API_KEY` | — | LLM API key (required if AI enabled) |
 | `AI_BATCH_SIZE` | `30` | Transactions grouped in each model request (1–100) |
-| `AI_REQUESTS_PER_DAY` | `200` | Shared request allowance, evenly paced across 24 hours (1–86400) |
-| `AI_REQUEST_INTERVAL` | `1m` | Minimum gap between requests; daily allowance may increase it |
+| `AI_REQUESTS_PER_DAY` | `1500` | Shared request allowance, evenly paced across 24 hours (1–86400) |
+| `AI_REQUEST_INTERVAL` | `57.6s` | Minimum gap between requests; daily allowance may increase it |
 | `AI_POLL_INTERVAL` | `30s` | How often the background worker looks for work |
 | `FX_BASE_URL` | `https://api.frankfurter.app` | Historical FX rate source |
 
@@ -123,8 +123,9 @@ per-transaction retry times and the shared next-request time, so restarting the 
 resetting the request budget. Run one app instance per database; the service
 serializes automatic and manual runs within that instance.
 
-Defaults allow one request every 7 minutes 12 seconds (200 spread over 24 hours),
-with up to 30 transactions per request. Rule matches consume no API calls. This
+Defaults pace 1,500 requests evenly across 24 hours (one every 57.6 seconds),
+with up to 30 transactions per request: about 45,000 transactions per day, or
+1,875 per hour on average. Rule matches consume no API calls. This
 is a local request budget, not a token or spending limit, and does not account
 for other applications using the same API key. Set the budget to match your
 provider quota. Increasing it still respects `AI_REQUEST_INTERVAL`.

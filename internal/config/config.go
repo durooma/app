@@ -46,7 +46,7 @@ func Load() (*Config, error) {
 		max      int
 	}{
 		{"AI_BATCH_SIZE", "30", &c.AIBatchSize, 100},
-		{"AI_REQUESTS_PER_DAY", "200", &c.AIRequestsPerDay, 86400},
+		{"AI_REQUESTS_PER_DAY", "1500", &c.AIRequestsPerDay, 86400},
 	} {
 		n, err := strconv.Atoi(env(setting.key, setting.def))
 		if err != nil || n < 1 || n > setting.max {
@@ -58,7 +58,7 @@ func Load() (*Config, error) {
 		key, def string
 		dest     *time.Duration
 	}{
-		{"AI_REQUEST_INTERVAL", "1m", &c.AIRequestInterval},
+		{"AI_REQUEST_INTERVAL", "57.6s", &c.AIRequestInterval},
 		{"AI_POLL_INTERVAL", "30s", &c.AIPollInterval},
 	} {
 		d, err := time.ParseDuration(env(setting.key, setting.def))
