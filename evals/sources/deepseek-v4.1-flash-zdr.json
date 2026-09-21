@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-09-20T22:14:57.246643+00:00",
+  "source": "https://openrouter.ai/api/v1/endpoints/zdr",
+  "model_endpoints": "https://openrouter.ai/api/v1/models/deepseek/deepseek-v4.1-flash/endpoints",
+  "zdr_endpoint": {
+    "name": "Fireworks | deepseek/deepseek-v4.1-flash-20260910",
+    "model_id": "deepseek/deepseek-v4.1-flash",
+    "model_name": "DeepSeek: DeepSeek V4.1 Flash",
+    "context_length": 1048576,
+    "pricing": {
+      "prompt": "0.00000022",
+      "completion": "0.00000066",
+      "input_cache_read": "0.000000007",
+      "discount": 0
+    },
+    "provider_name": "Fireworks",
+    "tag": "fireworks",
+    "quantization": "unknown",
+    "max_completion_tokens": 943718,
+    "max_prompt_tokens": null,
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "max_tokens",
+      "temperature",
+      "top_p",
+      "stop",
+      "frequency_penalty",
+      "presence_penalty",
+      "top_k",
+      "repetition_penalty",
+      "logit_bias",
+      "logprobs",
+      "top_logprobs",
+      "response_format",
+      "structured_outputs",
+      "tools",
+      "tool_choice",
+      "reasoning_effort"
+    ],
+    "supports_tool_choice": {
+      "none": true,
+      "auto": true,
+      "required": true,
+      "function": true
+    },
+    "status": 0,
+    "uptime_last_30m": 99.99428408116606,
+    "uptime_last_5m": 100,
+    "uptime_last_1d": 99.96275916199765,
+    "supports_implicit_caching": false,
+    "supports_voice_cloning": false,
+    "latency_last_30m": null,
+    "throughput_last_30m": null
+  }
+}

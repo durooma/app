@@ -1,0 +1,279 @@
+{
+  "name": "synthetic-smoke-v1",
+  "categories": [
+    {
+      "name": "Salary",
+      "description": "Employment income and wages"
+    },
+    {
+      "name": "Dividend",
+      "description": "Dividend payments from investments"
+    },
+    {
+      "name": "Stock Grant",
+      "description": "Vested equity / RSU grants"
+    },
+    {
+      "name": "Investment-Sell",
+      "description": "Proceeds and gains from selling investments"
+    },
+    {
+      "name": "Other Income",
+      "description": "Refunds, gifts, and miscellaneous income"
+    },
+    {
+      "name": "Housing",
+      "description": "Rent, mortgage, and related housing costs"
+    },
+    {
+      "name": "Utilities",
+      "description": "Electricity, water, internet, phone"
+    },
+    {
+      "name": "Groceries",
+      "description": "Supermarket and food shopping"
+    },
+    {
+      "name": "Dining",
+      "description": "Restaurants, cafes, and takeout"
+    },
+    {
+      "name": "Transport",
+      "description": "Public transit, fuel, car costs"
+    },
+    {
+      "name": "Health",
+      "description": "Insurance, doctors, pharmacy"
+    },
+    {
+      "name": "Shopping",
+      "description": "Clothing, electronics, general retail"
+    },
+    {
+      "name": "Travel",
+      "description": "Flights, hotels, holidays"
+    },
+    {
+      "name": "Entertainment",
+      "description": "Subscriptions, hobbies, leisure"
+    },
+    {
+      "name": "Tax",
+      "description": "Income tax and withholdings"
+    },
+    {
+      "name": "Fees",
+      "description": "Bank and service fees"
+    },
+    {
+      "name": "General",
+      "description": "Uncategorized fallback"
+    }
+  ],
+  "examples": [
+    {
+      "id": "synthetic-001",
+      "description": "ACME AG SALARY AUGUST",
+      "amount": 6500,
+      "expected": "Salary"
+    },
+    {
+      "id": "synthetic-002",
+      "description": "PAYROLL MONTHLY WAGES",
+      "amount": 4800,
+      "expected": "Salary"
+    },
+    {
+      "id": "synthetic-003",
+      "description": "CASH DIVIDEND ACME CORP",
+      "amount": 42.5,
+      "expected": "Dividend"
+    },
+    {
+      "id": "synthetic-004",
+      "description": "ETF DISTRIBUTION DIVIDEND",
+      "amount": 87.2,
+      "expected": "Dividend"
+    },
+    {
+      "id": "synthetic-005",
+      "description": "RSU VEST FAIR MARKET VALUE",
+      "amount": 3200,
+      "expected": "Stock Grant"
+    },
+    {
+      "id": "synthetic-006",
+      "description": "RESTRICTED STOCK GRANT VESTING",
+      "amount": 2400,
+      "expected": "Stock Grant"
+    },
+    {
+      "id": "synthetic-007",
+      "description": "REALIZED GAIN SALE OF SHARES",
+      "amount": 480,
+      "expected": "Investment-Sell"
+    },
+    {
+      "id": "synthetic-008",
+      "description": "STOCK SALE NET GAIN",
+      "amount": 125,
+      "expected": "Investment-Sell"
+    },
+    {
+      "id": "synthetic-009",
+      "description": "BIRTHDAY GIFT FROM FAMILY",
+      "amount": 100,
+      "expected": "Other Income"
+    },
+    {
+      "id": "synthetic-010",
+      "description": "INSURANCE PREMIUM REFUND",
+      "amount": 75,
+      "expected": "Other Income"
+    },
+    {
+      "id": "synthetic-011",
+      "description": "MONTHLY RENT APARTMENT",
+      "amount": -1800,
+      "expected": "Housing"
+    },
+    {
+      "id": "synthetic-012",
+      "description": "MORTGAGE PAYMENT",
+      "amount": -950,
+      "expected": "Housing"
+    },
+    {
+      "id": "synthetic-013",
+      "description": "ELECTRICITY MONTHLY BILL",
+      "amount": -85,
+      "expected": "Utilities"
+    },
+    {
+      "id": "synthetic-014",
+      "description": "HOME INTERNET SERVICE",
+      "amount": -59.9,
+      "expected": "Utilities"
+    },
+    {
+      "id": "synthetic-015",
+      "description": "SUPERMARKET FOOD SHOPPING",
+      "amount": -67.3,
+      "expected": "Groceries"
+    },
+    {
+      "id": "synthetic-016",
+      "description": "GROCERY STORE VEGETABLES",
+      "amount": -28.7,
+      "expected": "Groceries"
+    },
+    {
+      "id": "synthetic-017",
+      "description": "RESTAURANT DINNER",
+      "amount": -62,
+      "expected": "Dining"
+    },
+    {
+      "id": "synthetic-018",
+      "description": "CAFE COFFEE AND LUNCH",
+      "amount": -18.5,
+      "expected": "Dining"
+    },
+    {
+      "id": "synthetic-019",
+      "description": "CITY BUS MONTHLY PASS",
+      "amount": -75,
+      "expected": "Transport"
+    },
+    {
+      "id": "synthetic-020",
+      "description": "PETROL STATION FUEL",
+      "amount": -63,
+      "expected": "Transport"
+    },
+    {
+      "id": "synthetic-021",
+      "description": "PHARMACY PRESCRIPTION",
+      "amount": -22.4,
+      "expected": "Health"
+    },
+    {
+      "id": "synthetic-022",
+      "description": "DOCTOR CONSULTATION",
+      "amount": -130,
+      "expected": "Health"
+    },
+    {
+      "id": "synthetic-023",
+      "description": "CLOTHING STORE WINTER COAT",
+      "amount": -149,
+      "expected": "Shopping"
+    },
+    {
+      "id": "synthetic-024",
+      "description": "ELECTRONICS SHOP HEADPHONES",
+      "amount": -89,
+      "expected": "Shopping"
+    },
+    {
+      "id": "synthetic-025",
+      "description": "HOTEL HOLIDAY BOOKING",
+      "amount": -460,
+      "expected": "Travel"
+    },
+    {
+      "id": "synthetic-026",
+      "description": "AIRLINE FLIGHT TICKET",
+      "amount": -280,
+      "expected": "Travel"
+    },
+    {
+      "id": "synthetic-027",
+      "description": "CINEMA TICKETS",
+      "amount": -32,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "synthetic-028",
+      "description": "MUSIC STREAMING SUBSCRIPTION",
+      "amount": -12.9,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "synthetic-029",
+      "description": "INCOME TAX PAYMENT",
+      "amount": -2500,
+      "expected": "Tax"
+    },
+    {
+      "id": "synthetic-030",
+      "description": "TAX WITHHOLDING",
+      "amount": -170,
+      "expected": "Tax"
+    },
+    {
+      "id": "synthetic-031",
+      "description": "MONTHLY BANK ACCOUNT FEE",
+      "amount": -5,
+      "expected": "Fees"
+    },
+    {
+      "id": "synthetic-032",
+      "description": "WIRE TRANSFER SERVICE FEE",
+      "amount": -12,
+      "expected": "Fees"
+    },
+    {
+      "id": "synthetic-033",
+      "description": "PAYMENT REF 739104",
+      "amount": -48,
+      "expected": "General"
+    },
+    {
+      "id": "synthetic-034",
+      "description": "CARD TRANSACTION 009281",
+      "amount": -21,
+      "expected": "General"
+    }
+  ]
+}

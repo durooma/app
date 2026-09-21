@@ -1,0 +1,1875 @@
+{
+  "name": "public-us-dodata-v2-sample-v1",
+  "categories": [
+    {
+      "name": "Salary",
+      "description": "Employment income and wages"
+    },
+    {
+      "name": "Dividend",
+      "description": "Dividend payments from investments"
+    },
+    {
+      "name": "Stock Grant",
+      "description": "Vested equity / RSU grants"
+    },
+    {
+      "name": "Investment-Sell",
+      "description": "Proceeds and gains from selling investments"
+    },
+    {
+      "name": "Other Income",
+      "description": "Refunds, gifts, and miscellaneous income"
+    },
+    {
+      "name": "Housing",
+      "description": "Rent, mortgage, and related housing costs"
+    },
+    {
+      "name": "Utilities",
+      "description": "Electricity, water, internet, phone"
+    },
+    {
+      "name": "Groceries",
+      "description": "Supermarket and food shopping"
+    },
+    {
+      "name": "Dining",
+      "description": "Restaurants, cafes, and takeout"
+    },
+    {
+      "name": "Transport",
+      "description": "Public transit, fuel, car costs"
+    },
+    {
+      "name": "Health",
+      "description": "Insurance, doctors, pharmacy"
+    },
+    {
+      "name": "Shopping",
+      "description": "Clothing, electronics, general retail"
+    },
+    {
+      "name": "Travel",
+      "description": "Flights, hotels, holidays"
+    },
+    {
+      "name": "Entertainment",
+      "description": "Subscriptions, hobbies, leisure"
+    },
+    {
+      "name": "Tax",
+      "description": "Income tax and withholdings"
+    },
+    {
+      "name": "Fees",
+      "description": "Bank and service fees"
+    },
+    {
+      "name": "General",
+      "description": "Uncategorized fallback"
+    }
+  ],
+  "examples": [
+    {
+      "id": "dodata-v2-row-49161",
+      "description": "Pho Saigon*buqfkear8",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-57715",
+      "description": "Red Robin 7066 Industrial Rd Minneapolis55401 Mn Usa",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-33684",
+      "description": "BUYER PAYMENT: DUNKIN DONUTS",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-07744",
+      "description": "himalayan kitchen",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-40251",
+      "description": "CHICK-FIL-A 5304 BROADWAY DR NEWARK07101 NJ USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-66849",
+      "description": "THE HABIT BURGER*XOV1JFBS5S19",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-62829",
+      "description": "WENDY'S 8722 UNIVERSITY PKWY DALLAS75201 TX USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-41010",
+      "description": "CHEESECAKE FACTORY 4173 BROADWAY LN LAS VEGAS 89101 NV USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-67158",
+      "description": "SHAKE SHACK*TR9GB9NKE0I1",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-16960",
+      "description": "PAYPAL INST XFER INTELLIGENTSIA WEB ID: PAYPALSI16",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-14991",
+      "description": "INTELLIGENTSIA*8X2WNXL3IHV",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-28466",
+      "description": "IHOP 0223132",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-41938",
+      "description": "KUNG FU TEA 8904 ELM WAY UNION CITY 94587 CA USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-67645",
+      "description": "RAISINGCANES 42156",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-56193",
+      "description": "RAMEN HOUSE #1023 PORTLAND",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-33376",
+      "description": "CHEESECAKE FACTORY 4079 MARKET WAY ATLANTA 30301-2352GA USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-40808",
+      "description": "TEXAS ROADHOUSE",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-35583",
+      "description": "SQ *SOUP KITCHEN",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-01915",
+      "description": "BURGER KING 2972 CENTER DR OAKLAND94601 CA USA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-55247",
+      "description": "PAYPAL *FATBURGER ZCWH0G4GTD",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-18302",
+      "description": "DENNY'S",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-03614",
+      "description": "taco cabana - minneapolis",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-20277",
+      "description": "FREDDY'S 101019",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-63146",
+      "description": "CHECKERS - TAMPA",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-67551",
+      "description": "TOFU HOUSE 10688597",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-06276",
+      "description": "china wok",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-34389",
+      "description": "GEN KOREAN BBQ #80742 AUSTIN",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-24835",
+      "description": "CLV*HARVEST TABLE #709",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-60651",
+      "description": "Ming's Kitchen 4305",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-02706",
+      "description": "MING'S KITCHEN",
+      "amount": -1,
+      "expected": "Dining"
+    },
+    {
+      "id": "dodata-v2-row-66461",
+      "description": "DAVE & BUSTER'S 5317",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-67744",
+      "description": "FANDUEL 686 MARKET ST HAYWARD94541 CA USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-28840",
+      "description": "DAVE & BUSTER'S 6298 PARK LN CHARLOTTE 28201-8271NC USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-58039",
+      "description": "ESCAPE ROOM - SAN FRANCISCO",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-25399",
+      "description": "SWIMMING POOL; Billing",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-05560",
+      "description": "BOWLING 1681 PARK CT OAKLAND 94601 CA USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08497",
+      "description": "preauthorized withdrawal to blizzard",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-06859",
+      "description": "BETMGM 4668 MAIN LN HOUSTON 77001-3201TX USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-50401",
+      "description": "AMC THEATRES 9522 MAIN LN OAKLAND 94601 CA USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-56389",
+      "description": "ESCAPE ROOM; Billing",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-67109",
+      "description": "DAZN #765 DALLAS",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-06838",
+      "description": "CINEMARK 669816",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07267",
+      "description": "PAYPAL INST XFER AMC THEATRES WEB ID: PAYPALSI13",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-43412",
+      "description": "ZOO 66502191",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-30433",
+      "description": "Regal Cinemas 8324 University Pkwy Denver 80201 Co Usa",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08598",
+      "description": "PAYPAL INST XFER AXSTICKETS WEB ID: PAYPALSI93",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-23180",
+      "description": "livenation 814 mission dr salt lake city 84101-3319ut usa",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-36491",
+      "description": "IMAX LLC",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-26163",
+      "description": "FUBOTV #378 SAN JOSE",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-04321",
+      "description": "STUBHUB #7403 SAN DIEGO",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08860",
+      "description": "PREAUTHORIZED WITHDRAWAL TO PLAYSTATION",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08662",
+      "description": "SWIMMING POOL - SACRAMENTO",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-05226",
+      "description": "preauthorized withdrawal to museum",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07555",
+      "description": "GO KART*LGUQ6WK56",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-18369",
+      "description": "MLB.TV*NIDFORR9LB",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-01249",
+      "description": "FANDANGO INC.",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-63678",
+      "description": "PAYPAL *TRAMPOLINE PARK JE8ITCVKMA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07971",
+      "description": "SWIMMING POOL 572 PARK AVE UNION CITY94587 CA USA",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-51703",
+      "description": "PAYPAL INST XFER FUBOTV WEB ID: PAYPALSI58",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-23617",
+      "description": "EA GAMES #29483 INDIANAPOLIS",
+      "amount": -1,
+      "expected": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-41006",
+      "description": "LATE PAYMENT FEE - 86/12",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-15227",
+      "description": "MINIMUM BALANCE FEE - 98/56",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59177",
+      "description": "ATM SURCHARGE - 12/06",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53736",
+      "description": "Wire Transfer Fee - 46/95",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-28334",
+      "description": "wire transfer fee - 01/07",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-49293",
+      "description": "MINIMUM BALANCE FEE - 21/61",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-47985",
+      "description": "STOP PAYMENT FEE - 37/93",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-37589",
+      "description": "ATM SURCHARGE - 69/17",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-41375",
+      "description": "EXPEDITED SHIPPING FEE - 07/87",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59439",
+      "description": "ATM SURCHARGE - 29/94",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-34568",
+      "description": "atm surcharge - 74/11",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-23296",
+      "description": "CASH ADVANCE FEE - 37/59",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-16987",
+      "description": "stop payment fee - 01/90",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-06323",
+      "description": "minimum balance fee - 46/88",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-11516",
+      "description": "STOP PAYMENT FEE - 07/68",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-20242",
+      "description": "ATM FEE - 60/35",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-52436",
+      "description": "ACH RETURN FEE - 88/51",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-54792",
+      "description": "EXCESS TRANSACTION FEE - 01/15",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-00556",
+      "description": "NON-NETWORK ATM FEE - 61/75",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-14015",
+      "description": "INACTIVITY FEE - 61/08",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59096",
+      "description": "CASH ADVANCE FEE - 94/59",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-60327",
+      "description": "Cash Advance Fee - 44/59",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-02253",
+      "description": "international wire fee - 97/36",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53721",
+      "description": "RETURNED ITEM FEE - 82/67",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-41849",
+      "description": "ATM SERVICE CHARGE - 17/00",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-50105",
+      "description": "wire transfer fee - 54/85",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-21123",
+      "description": "INTERNATIONAL WIRE FEE - 30/05",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53295",
+      "description": "STOP PAYMENT FEE - 87/70",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-03881",
+      "description": "Account Maintenance Fee - 47/68",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-51302",
+      "description": "OVERDRAFT FEE - 98/68",
+      "amount": -1,
+      "expected": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-02519",
+      "description": "SAFEWAY #980",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21745",
+      "description": "RANCH 99 1914 BROADWAY ST ORLANDO 32801 FL USA",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-26572",
+      "description": "PIGGLYWI NAS #49409",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-20667",
+      "description": "TRADERJOES #572 LAS VEGA",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-46316",
+      "description": "Sam's Club*9y7oki6fd1bc",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-32212",
+      "description": "MITSUWA #75645",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-62506",
+      "description": "LUCKY #4495",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-53961",
+      "description": "kroger*0dkunirh",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-28957",
+      "description": "WHOLE FOODS #275",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-17686",
+      "description": "GROCOUTLT #90863 TAMPA",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-04897",
+      "description": "NORTHGATE MARKET 8126 UNION CITY",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21621",
+      "description": "Costco Whse 0404056",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-45661",
+      "description": "northgatem oak #832",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-23097",
+      "description": "FOODMAXX 8977 MISSION DR SALT LAKE CITY 84101-3409UT USA",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-28794",
+      "description": "SAMSCLU #4742",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-35384",
+      "description": "Safeway 2490 Raleigh",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-13288",
+      "description": "WEGMANS",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-31254",
+      "description": "H MART #3764",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-46036",
+      "description": "STOP & SHOP #93661",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-41671",
+      "description": "PP*365 market",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-12011",
+      "description": "STOP&SH #7499",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-26898",
+      "description": "GROCERY OUTLET #06310",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-12909",
+      "description": "CARDENAS 8650 TAMPA",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-07326",
+      "description": "subscription payment: kroger",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-33291",
+      "description": "TRADER JOE'S 7270 INDIANAPOLIS",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-31939",
+      "description": "WHOLEFOODS NAS #848",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-35422",
+      "description": "NORTHGATE MARKET - HOUSTON",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-40430",
+      "description": "piggly wiggly 1767 mission ave hayward94541 ca usa",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-42051",
+      "description": "SMARTFINAL #28 HAYWARD",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21717",
+      "description": "Harris Teeter 6345 Center Ave Nashville 37201-3215tn Usa",
+      "amount": -1,
+      "expected": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-22358",
+      "description": "HEARTLAND DENTAL 194491",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-41503",
+      "description": "DR LI ORTHOPEDICS",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-19366",
+      "description": "dr. kim physical therapy",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-26956",
+      "description": "RITE AID #059 OAKLAND",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-11235",
+      "description": "WALGREENS - SEATTLE",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-57488",
+      "description": "lewis family medicine",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-19896",
+      "description": "WARBY PARKER 2254 CENTER WAY PHOENIX 85001-6131AZ USA",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-60257",
+      "description": "DR THOMAS DERMATOLOGY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-58045",
+      "description": "MARTINEZ OPTOMETRY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-21944",
+      "description": "Dr. Thompson Pediatrics",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-22922",
+      "description": "SHAH CARDIOLOGY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-03362",
+      "description": "DR JACKSON CHIROPRACTIC",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-32905",
+      "description": "DR MOORE OPTOMETRY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-55795",
+      "description": "ANDERSON CHIROPRACTIC",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-01450",
+      "description": "HARRIS ORTHOPEDICS",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-08589",
+      "description": "americas best 347259",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-41502",
+      "description": "PAYPAL INST XFER LENSCRAFTERS WEB ID: PAYPALSI76",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-11961",
+      "description": "BETTERHELP CORP",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-47732",
+      "description": "SANCHEZ CHIROPRACTIC",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-16942",
+      "description": "DR. SINGH PHYSICAL THERAPY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-50122",
+      "description": "MAYO CLINIC MEDICAL PMT WEB ID: N2Y84VN0",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-33765",
+      "description": "DR LEE OPTOMETRY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-11022",
+      "description": "Miller Psychiatry",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-57566",
+      "description": "CEREBRAL 2353 ELM ST RALEIGH27601 NC USA",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-24085",
+      "description": "DR SHAH PSYCHIATRY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-27120",
+      "description": "DR. DAVIS CARDIOLOGY",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-30615",
+      "description": "Express Checkout Payment: PLUSHCARE",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-35389",
+      "description": "PEARLE VISION*3DM1ZD97N80",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-33274",
+      "description": "MAYO CLINIC INC",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-09600",
+      "description": "DR. JOHNSON PEDIATRICS",
+      "amount": -1,
+      "expected": "Health"
+    },
+    {
+      "id": "dodata-v2-row-00096",
+      "description": "Camden Property Rent Pmt 15503030 Web Id: C537qbgj",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-49034",
+      "description": "EQUITY RESIDENTIALRENT PMT 75770644 PPD ID: 631907597",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-26349",
+      "description": "MAA RENT PMT 43535781 WEB ID: 5WLGWNJE",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-13329",
+      "description": "ALLIANT CU MORTGAGE 02917210 PPD ID: 937069246",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-18187",
+      "description": "AIMCO RENT PMT PPD ID: 9703793002",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-18643",
+      "description": "related cos rent pmt 02998162 web id: f851c6r9",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-13915",
+      "description": "PATELCO CU MORTGAGE 18563645 PPD ID: 140715388",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-11685",
+      "description": "ROCKET MORTGAGE MORTGAGE 80359054 WEB ID: YV5A9MTV",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-59116",
+      "description": "movement mortgagemortgage 00184588 ppd id: 577913805",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-30319",
+      "description": "pennymac mortgage 87621382 web id: rb7m3hzp",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-33871",
+      "description": "RELATED COS MONTHLY RENT PPD ID: 9319682385",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-42015",
+      "description": "NHP FOUNDATION RENT PMT PPD ID: 7979507063",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-39492",
+      "description": "RELATED COS RENT PMT 45999956 PPD ID: 624709750",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-08253",
+      "description": "NHP FOUNDATION RENT PMT 10111792 PPD ID: 094819388",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-33682",
+      "description": "jbg smith rent pmt 33973952 ppd id: 488326959",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-11951",
+      "description": "BOZZUTO RENT PMT 38939399 WEB ID: BQWBKMKP",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-43719",
+      "description": "Udr Inc Rent Pmt 04977947 Web Id: 8lavwo5n",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-03182",
+      "description": "CAMDEN PROPERTY RENT PMT 64177018 WEB ID: BW6A7S93",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-40734",
+      "description": "INVITATION HOMES RENT PMT PPD ID: 9833145178",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-34235",
+      "description": "CAMDEN PROPERTY RENT PMT 98587828 WEB ID: PVWIJTCR",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-54628",
+      "description": "NHP FOUNDATION RENT PMT 30667348 WEB ID: NDA35WK6",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-35610",
+      "description": "NEWREZ MORTGAGE 29106243 PPD ID: 386769664",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-47248",
+      "description": "RELATED COS RENT PMT 72617066 WEB ID: FYNL54L3",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-22374",
+      "description": "MAA RENT PMT 68431808 PPD ID: 121812460",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-04342",
+      "description": "Aimco Rent Pmt 74347788 Ppd Id: 449389690",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-31104",
+      "description": "PHH MORTGAGE MORTGAGE 31540813 WEB ID: VOFX3ZKK",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-37400",
+      "description": "SCHOOLSFIRST FCU MORTGAGE 59075945 PPD ID: 887941242",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-52761",
+      "description": "aimco rent pmt 86987000 web id: xhinnmn4",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-13636",
+      "description": "bank of america mortgagemortgage 87201517 web id: ldsp532d",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-63902",
+      "description": "NEWREZ MORTGAGE 55267069 PPD ID: 371082352",
+      "amount": -1,
+      "expected": "Housing"
+    },
+    {
+      "id": "dodata-v2-row-20346",
+      "description": "paypal *samsung wsmwkaqfzn",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-13292",
+      "description": "century 21 #6103",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-65113",
+      "description": "Walmart #7270 San Diego",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-05628",
+      "description": "LIFETOUCH 697979",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-25079",
+      "description": "SHUTTERFLY 4751",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-36756",
+      "description": "Amazon.com*8ZCRBQG2N8",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-31245",
+      "description": "SNAPFISH 341 BROADWAY ST PHOENIX 85001-4332AZ USA",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-20468",
+      "description": "PAYPAL INST XFER ETSY WEB ID: PAYPALSI87",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-66274",
+      "description": "AMZN MKTP US*BLRR6QCR1",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-11931",
+      "description": "BEV MO #4997 MIAMI",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-62136",
+      "description": "TARGET T-5500",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-36586",
+      "description": "Gap.com #929",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-60379",
+      "description": "MERCARI 2043 BROADWAY PKWY PORTLAND 97201-9884OR USA",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-10739",
+      "description": "TARGET T-2756",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-13622",
+      "description": "AMAZON MKTPL*CHZA47KMQ",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-58176",
+      "description": "IKEA 3094 INDUSTRIAL BLVD PITTSBURGH15201 PA USA",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-16475",
+      "description": "PYPL*ASOS",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-61986",
+      "description": "Target 62744630",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-25167",
+      "description": "ROSS #39405",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-35840",
+      "description": "BUYER PAYMENT: WALMART",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-46074",
+      "description": "walmart supercenter #5537",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-37729",
+      "description": "J.CREW 03524",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-55574",
+      "description": "BATH & BODY WORKS*EPA4041B8V5",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-60502",
+      "description": "Amazon.com*5Y4E3Y15",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-37295",
+      "description": "Amazon.com*4VTR91D2",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-53207",
+      "description": "HP STORE 5714 OAK BLVD FREMONT 94536-3741CA USA",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-10517",
+      "description": "TARGET 85738287",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-15970",
+      "description": "OVERSTOCK #248",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-06461",
+      "description": "Amazon.com*63BO8EU1MGE",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-22068",
+      "description": "tiktok shop 2799 park ln salt lake city 84101 ut usa",
+      "amount": -1,
+      "expected": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-07738",
+      "description": "WAWA #0424 QUEENS",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-23338",
+      "description": "SPEEDWAY*UFFEXUT3KLGJ",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-48829",
+      "description": "evgo 4668 main dr charlotte28201 nc usa",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-35085",
+      "description": "AMERICAS TIRE 5140 MISSION WAY SAN JOSE 95101 CA USA",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-47995",
+      "description": "uber *trip oakland w58vk2",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-12184",
+      "description": "EXXON 020071",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-20190",
+      "description": "bart 3025 oak ave oakland94601 ca usa",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-66171",
+      "description": "Buyer Payment: SPOTHERO",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-18920",
+      "description": "electrify america #37160",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-23703",
+      "description": "SHEETZ - HAYWARD",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-36362",
+      "description": "subscription payment: spothero",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-02304",
+      "description": "PARKSMART 9788 UNIVERSITY WAY SAN FRANCISCO 94102-3249CA USA",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-13867",
+      "description": "LYFT *TRIP HAYWARD M8KY0E",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-04990",
+      "description": "PHILLIPS 66 #488 DENVER",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-42821",
+      "description": "ARCO #67869 SAN FRANCISCO",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-34895",
+      "description": "Chevron 02789",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-44168",
+      "description": "quiktrip*8ko2eau5",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-49149",
+      "description": "76 - DALLAS",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-66421",
+      "description": "BART 5687 INDUSTRIAL AVE PITTSBURGH15201 PA USA",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-03784",
+      "description": "LYFT *TRIP LOS ANGELES MMEH2E",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-67822",
+      "description": "AUTOZONE.COM",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-48055",
+      "description": "lyft *trip newark o91yic",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-03487",
+      "description": "ZIPS CAR WASH CO",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-14502",
+      "description": "PAYPAL *MIDAS",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-47501",
+      "description": "UBER *TRIP SALT LAKE CITY 6TSNED",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-15229",
+      "description": "MOBIL*JTEITCD7WT",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-39951",
+      "description": "CITGO 44464884",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-23070",
+      "description": "FIRESTONE*BX7RZU8HKH",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-10506",
+      "description": "CHARGEPOINT *EVGO STATION 4050",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-61720",
+      "description": "CHEVRON #56911 SAN DIEGO",
+      "amount": -1,
+      "expected": "Transport"
+    },
+    {
+      "id": "dodata-v2-row-38203",
+      "description": "PRICELINE 12448",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-18210",
+      "description": "BOOKING.COM; PAYMENT",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-33372",
+      "description": "SPIRIT AIRLINES LLC",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-01516",
+      "description": "WITHDRAWAL FROM MARRIOTT",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-13383",
+      "description": "TURO 4079 MISSION RD CHICAGO 60601-4284IL USA",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-19569",
+      "description": "JETBLUE - DALLAS",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-67851",
+      "description": "Wyndham*821ji67qa",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-67181",
+      "description": "Global Entry - Minneapolis",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-20829",
+      "description": "PYPL *WYNDHAM",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-11122",
+      "description": "PYPL*AMERICAN AIRLINES",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-60269",
+      "description": "TSA PRECHECK #0446 PITTSBURGH",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-09307",
+      "description": "MARRIOTT INC",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-43387",
+      "description": "AIRBNB 2347 OAK PKWY MIAMI 33101-5525FL USA",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-15173",
+      "description": "FRONTIER AIRLINES; Charge",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-30498",
+      "description": "AMERICAN AIRLINES #4117 BROOKLYN",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-45500",
+      "description": "PRINCESS CRUISES - UNION CITY",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-05217",
+      "description": "TRAVELOCITY 2469 ELM PKWY PHOENIX85001 AZ USA",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-41401",
+      "description": "CARNIVAL CRUISE 6576 UNIVERSITY WAY SEATTLE 98101 WA USA",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-00358",
+      "description": "RADISSON #2357 PHOENIX",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-44071",
+      "description": "MSC CRUISES BOOKING 72182286",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-22194",
+      "description": "MSC CRUISES 47957",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-32993",
+      "description": "FRONTIER AIRLINES - RALEIGH",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-05736",
+      "description": "ROYAL CARIBBEAN BOOKING 25256050",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-39758",
+      "description": "MSC CRUISES.COM",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-13396",
+      "description": "withdrawal from hotwire",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-44591",
+      "description": "PREAUTHORIZED WITHDRAWAL TO PRINCESS CRUISES",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-47641",
+      "description": "Alaska Airlines 1598 Market Blvd Seattle 98101 Wa Usa",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-16715",
+      "description": "PP*MARRIOTT",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-60396",
+      "description": "Hotwire*ngc3z21bj",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-51448",
+      "description": "NORWEGIAN CRUISE BOOKING 33483691",
+      "amount": -1,
+      "expected": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-61119",
+      "description": "CITY WATER UTIL PMT WEB ID: I869064K",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-33262",
+      "description": "PG&E CABLE SVC WEB ID: VWV9TO02",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-12737",
+      "description": "STARLINK 2461 MAIN ST QUEENS 11101 NY USA",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-65469",
+      "description": "Municipal Water 9711 Mission Ave Atlanta 30301-7615ga Usa",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-48684",
+      "description": "FLORIDA POWER ONLINE PMT WEB ID: MPKTGILF",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-50010",
+      "description": "centurylink 387524",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-00342",
+      "description": "WASTE MANAGEMENT REFUSE",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-33279",
+      "description": "AES 84516",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-58164",
+      "description": "METRO BY T-MOBILEELECTRIC WEB ID: O96EZKME",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-38908",
+      "description": "XCEL ENERGY INTERNET WEB ID: YSW7U4HL",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-57212",
+      "description": "VERIZON AUTOPAY WEB ID: PJ8YK71I",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-65779",
+      "description": "COX 1255",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-38763",
+      "description": "Withdrawal from MINT MOBILE GAS",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-29984",
+      "description": "WITHDRAWAL FROM CONED CABLE",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-16791",
+      "description": "METRO BY T-MOBILEAUTOPAY WEB ID: KLUTIJNW",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-35537",
+      "description": "MINT MOBILE PHONE SVC WEB ID: TZS6M9L9",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-03308",
+      "description": "Withdrawal From Casella Waste Pickup",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-30237",
+      "description": "water utility 8844 broadway dr pittsburgh 15201-7475pa usa",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-41296",
+      "description": "CRICKET 2111 INDUSTRIAL LN TAMPA33601 FL USA",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-13852",
+      "description": "CITY WATER CABLE SVC WEB ID: UZ5JAVPO",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-34207",
+      "description": "ENTERGY ONLINE PMT WEB ID: 0DJLJWI6",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-13577",
+      "description": "STARLINK ONLINE PMT WEB ID: KEIK6W4A",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-66948",
+      "description": "t-mobile 3935 center way san francisco94102 ca usa",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-03368",
+      "description": "Withdrawal from AT&T WEB ONLINE",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-45624",
+      "description": "STARLINK 6705 MISSION WAY MIAMI 33101-6699FL USA",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-06455",
+      "description": "GOOGLE FIBER INTERNET WEB ID: F1ZY845X",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-42785",
+      "description": "AT&T 6032 BROADWAY PKWY PHOENIX 85001 AZ USA",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-64786",
+      "description": "CENTURYLINK 7810 MARKET CT COLUMBUS 43201 OH USA",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-23889",
+      "description": "at&t 8768 main st philadelphia 19101-7737pa usa",
+      "amount": -1,
+      "expected": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-22713",
+      "description": "NATIONAL GRID UTIL PMT WEB ID: LYIGZ04F",
+      "amount": -1,
+      "expected": "Utilities"
+    }
+  ]
+}

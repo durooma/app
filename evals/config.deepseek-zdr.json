@@ -1,0 +1,41 @@
+{
+  "models": [
+    {
+      "name": "deepseek-v4.1-flash-zdr",
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "routing": {
+        "zdr": true,
+        "data_collection": "deny",
+        "only": [
+          "fireworks"
+        ]
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "production"
+    },
+    {
+      "name": "explicit",
+      "template_file": "prompts/explicit.txt"
+    }
+  ],
+  "batch_sizes": [
+    1,
+    15,
+    30
+  ],
+  "repeats": 1,
+  "seed": 42,
+  "timeout": "120s",
+  "request_interval": "250ms",
+  "concurrency": 8,
+  "retry": {
+    "max_attempts": 5,
+    "initial_backoff": "2s",
+    "max_backoff": "30s"
+  }
+}

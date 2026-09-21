@@ -2,3 +2,8 @@
 /tmp/
 .env
 *.out
+/evals/runs/
+/evals/local/
+
+# Isolated eval API credentials
+/.eval-env

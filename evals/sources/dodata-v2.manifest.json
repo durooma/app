@@ -1,0 +1,1553 @@
+{
+  "dataset": "public-us-dodata-v2-sample-v1",
+  "source": "https://huggingface.co/datasets/DoDataThings/us-bank-transaction-categories-v2",
+  "revision": "3e8d052cb7b362fb1a04b6064d2331982553ea56",
+  "download_url": "https://huggingface.co/datasets/DoDataThings/us-bank-transaction-categories-v2/resolve/3e8d052cb7b362fb1a04b6064d2331982553ea56/transactions-synthetic.csv",
+  "source_sha256": "0424aed6e76f74a5b3b1ff61ccec43bc321622e6806da353b910b3b2c8108f6e",
+  "source_rows": 68000,
+  "license": "MIT (declared in upstream dataset card)",
+  "source_kind": "synthetic",
+  "selection_seed": "durooma-public-us-v1",
+  "selection": "first 30 per mapped category sorted by SHA256(seed + newline + normalized description)",
+  "mapping": {
+    "Restaurants": "Dining",
+    "Groceries": "Groceries",
+    "Shopping": "Shopping",
+    "Transportation": "Transport",
+    "Entertainment": "Entertainment",
+    "Utilities": "Utilities",
+    "Healthcare": "Health",
+    "Mortgage": "Housing",
+    "Rent": "Housing",
+    "Travel": "Travel",
+    "Fees": "Fees"
+  },
+  "ambiguous_description_exclusions": {
+    "instacart": "Source Restaurants label can conflict with grocery-delivery interpretation.",
+    "daily cash adjustment": "Description does not establish that this is a fee."
+  },
+  "excluded_rows": {
+    "ambiguous_description": 161,
+    "conflicting_labels": 19,
+    "duplicate_description": 15777,
+    "non_debit": 1940,
+    "unsupported_category": 24000
+  },
+  "eligible_unique_by_category": {
+    "Dining": 3453,
+    "Entertainment": 1839,
+    "Fees": 1137,
+    "Groceries": 3388,
+    "Health": 1969,
+    "Housing": 2980,
+    "Shopping": 3675,
+    "Transport": 2778,
+    "Travel": 2019,
+    "Utilities": 2865
+  },
+  "amount_policy": "all -1; source debit direction retained, no real amounts available",
+  "description_policy": "strip [debit] prefix and outer whitespace; otherwise preserve source text",
+  "source_row_policy": "one-based data row, excluding CSV header",
+  "rows": [
+    {
+      "id": "dodata-v2-row-49161",
+      "source_row": 49161,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-57715",
+      "source_row": 57715,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-33684",
+      "source_row": 33684,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-07744",
+      "source_row": 7744,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-40251",
+      "source_row": 40251,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-66849",
+      "source_row": 66849,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-62829",
+      "source_row": 62829,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-41010",
+      "source_row": 41010,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-67158",
+      "source_row": 67158,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-16960",
+      "source_row": 16960,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-14991",
+      "source_row": 14991,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-28466",
+      "source_row": 28466,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-41938",
+      "source_row": 41938,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-67645",
+      "source_row": 67645,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-56193",
+      "source_row": 56193,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-33376",
+      "source_row": 33376,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-40808",
+      "source_row": 40808,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-35583",
+      "source_row": 35583,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-01915",
+      "source_row": 1915,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-55247",
+      "source_row": 55247,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-18302",
+      "source_row": 18302,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-03614",
+      "source_row": 3614,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-20277",
+      "source_row": 20277,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-63146",
+      "source_row": 63146,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-67551",
+      "source_row": 67551,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-06276",
+      "source_row": 6276,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-34389",
+      "source_row": 34389,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-24835",
+      "source_row": 24835,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-60651",
+      "source_row": 60651,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-02706",
+      "source_row": 2706,
+      "source_category": "Restaurants"
+    },
+    {
+      "id": "dodata-v2-row-66461",
+      "source_row": 66461,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-67744",
+      "source_row": 67744,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-28840",
+      "source_row": 28840,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-58039",
+      "source_row": 58039,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-25399",
+      "source_row": 25399,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-05560",
+      "source_row": 5560,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08497",
+      "source_row": 8497,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-06859",
+      "source_row": 6859,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-50401",
+      "source_row": 50401,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-56389",
+      "source_row": 56389,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-67109",
+      "source_row": 67109,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-06838",
+      "source_row": 6838,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07267",
+      "source_row": 7267,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-43412",
+      "source_row": 43412,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-30433",
+      "source_row": 30433,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08598",
+      "source_row": 8598,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-23180",
+      "source_row": 23180,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-36491",
+      "source_row": 36491,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-26163",
+      "source_row": 26163,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-04321",
+      "source_row": 4321,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08860",
+      "source_row": 8860,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-08662",
+      "source_row": 8662,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-05226",
+      "source_row": 5226,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07555",
+      "source_row": 7555,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-18369",
+      "source_row": 18369,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-01249",
+      "source_row": 1249,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-63678",
+      "source_row": 63678,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-07971",
+      "source_row": 7971,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-51703",
+      "source_row": 51703,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-23617",
+      "source_row": 23617,
+      "source_category": "Entertainment"
+    },
+    {
+      "id": "dodata-v2-row-41006",
+      "source_row": 41006,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-15227",
+      "source_row": 15227,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59177",
+      "source_row": 59177,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53736",
+      "source_row": 53736,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-28334",
+      "source_row": 28334,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-49293",
+      "source_row": 49293,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-47985",
+      "source_row": 47985,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-37589",
+      "source_row": 37589,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-41375",
+      "source_row": 41375,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59439",
+      "source_row": 59439,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-34568",
+      "source_row": 34568,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-23296",
+      "source_row": 23296,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-16987",
+      "source_row": 16987,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-06323",
+      "source_row": 6323,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-11516",
+      "source_row": 11516,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-20242",
+      "source_row": 20242,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-52436",
+      "source_row": 52436,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-54792",
+      "source_row": 54792,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-00556",
+      "source_row": 556,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-14015",
+      "source_row": 14015,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-59096",
+      "source_row": 59096,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-60327",
+      "source_row": 60327,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-02253",
+      "source_row": 2253,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53721",
+      "source_row": 53721,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-41849",
+      "source_row": 41849,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-50105",
+      "source_row": 50105,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-21123",
+      "source_row": 21123,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-53295",
+      "source_row": 53295,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-03881",
+      "source_row": 3881,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-51302",
+      "source_row": 51302,
+      "source_category": "Fees"
+    },
+    {
+      "id": "dodata-v2-row-02519",
+      "source_row": 2519,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21745",
+      "source_row": 21745,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-26572",
+      "source_row": 26572,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-20667",
+      "source_row": 20667,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-46316",
+      "source_row": 46316,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-32212",
+      "source_row": 32212,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-62506",
+      "source_row": 62506,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-53961",
+      "source_row": 53961,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-28957",
+      "source_row": 28957,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-17686",
+      "source_row": 17686,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-04897",
+      "source_row": 4897,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21621",
+      "source_row": 21621,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-45661",
+      "source_row": 45661,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-23097",
+      "source_row": 23097,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-28794",
+      "source_row": 28794,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-35384",
+      "source_row": 35384,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-13288",
+      "source_row": 13288,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-31254",
+      "source_row": 31254,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-46036",
+      "source_row": 46036,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-41671",
+      "source_row": 41671,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-12011",
+      "source_row": 12011,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-26898",
+      "source_row": 26898,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-12909",
+      "source_row": 12909,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-07326",
+      "source_row": 7326,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-33291",
+      "source_row": 33291,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-31939",
+      "source_row": 31939,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-35422",
+      "source_row": 35422,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-40430",
+      "source_row": 40430,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-42051",
+      "source_row": 42051,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-21717",
+      "source_row": 21717,
+      "source_category": "Groceries"
+    },
+    {
+      "id": "dodata-v2-row-22358",
+      "source_row": 22358,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-41503",
+      "source_row": 41503,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-19366",
+      "source_row": 19366,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-26956",
+      "source_row": 26956,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-11235",
+      "source_row": 11235,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-57488",
+      "source_row": 57488,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-19896",
+      "source_row": 19896,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-60257",
+      "source_row": 60257,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-58045",
+      "source_row": 58045,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-21944",
+      "source_row": 21944,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-22922",
+      "source_row": 22922,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-03362",
+      "source_row": 3362,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-32905",
+      "source_row": 32905,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-55795",
+      "source_row": 55795,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-01450",
+      "source_row": 1450,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-08589",
+      "source_row": 8589,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-41502",
+      "source_row": 41502,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-11961",
+      "source_row": 11961,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-47732",
+      "source_row": 47732,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-16942",
+      "source_row": 16942,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-50122",
+      "source_row": 50122,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-33765",
+      "source_row": 33765,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-11022",
+      "source_row": 11022,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-57566",
+      "source_row": 57566,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-24085",
+      "source_row": 24085,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-27120",
+      "source_row": 27120,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-30615",
+      "source_row": 30615,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-35389",
+      "source_row": 35389,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-33274",
+      "source_row": 33274,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-09600",
+      "source_row": 9600,
+      "source_category": "Healthcare"
+    },
+    {
+      "id": "dodata-v2-row-00096",
+      "source_row": 96,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-49034",
+      "source_row": 49034,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-26349",
+      "source_row": 26349,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-13329",
+      "source_row": 13329,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-18187",
+      "source_row": 18187,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-18643",
+      "source_row": 18643,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-13915",
+      "source_row": 13915,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-11685",
+      "source_row": 11685,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-59116",
+      "source_row": 59116,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-30319",
+      "source_row": 30319,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-33871",
+      "source_row": 33871,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-42015",
+      "source_row": 42015,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-39492",
+      "source_row": 39492,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-08253",
+      "source_row": 8253,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-33682",
+      "source_row": 33682,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-11951",
+      "source_row": 11951,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-43719",
+      "source_row": 43719,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-03182",
+      "source_row": 3182,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-40734",
+      "source_row": 40734,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-34235",
+      "source_row": 34235,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-54628",
+      "source_row": 54628,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-35610",
+      "source_row": 35610,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-47248",
+      "source_row": 47248,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-22374",
+      "source_row": 22374,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-04342",
+      "source_row": 4342,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-31104",
+      "source_row": 31104,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-37400",
+      "source_row": 37400,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-52761",
+      "source_row": 52761,
+      "source_category": "Rent"
+    },
+    {
+      "id": "dodata-v2-row-13636",
+      "source_row": 13636,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-63902",
+      "source_row": 63902,
+      "source_category": "Mortgage"
+    },
+    {
+      "id": "dodata-v2-row-20346",
+      "source_row": 20346,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-13292",
+      "source_row": 13292,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-65113",
+      "source_row": 65113,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-05628",
+      "source_row": 5628,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-25079",
+      "source_row": 25079,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-36756",
+      "source_row": 36756,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-31245",
+      "source_row": 31245,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-20468",
+      "source_row": 20468,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-66274",
+      "source_row": 66274,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-11931",
+      "source_row": 11931,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-62136",
+      "source_row": 62136,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-36586",
+      "source_row": 36586,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-60379",
+      "source_row": 60379,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-10739",
+      "source_row": 10739,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-13622",
+      "source_row": 13622,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-58176",
+      "source_row": 58176,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-16475",
+      "source_row": 16475,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-61986",
+      "source_row": 61986,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-25167",
+      "source_row": 25167,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-35840",
+      "source_row": 35840,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-46074",
+      "source_row": 46074,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-37729",
+      "source_row": 37729,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-55574",
+      "source_row": 55574,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-60502",
+      "source_row": 60502,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-37295",
+      "source_row": 37295,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-53207",
+      "source_row": 53207,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-10517",
+      "source_row": 10517,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-15970",
+      "source_row": 15970,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-06461",
+      "source_row": 6461,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-22068",
+      "source_row": 22068,
+      "source_category": "Shopping"
+    },
+    {
+      "id": "dodata-v2-row-07738",
+      "source_row": 7738,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-23338",
+      "source_row": 23338,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-48829",
+      "source_row": 48829,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-35085",
+      "source_row": 35085,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-47995",
+      "source_row": 47995,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-12184",
+      "source_row": 12184,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-20190",
+      "source_row": 20190,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-66171",
+      "source_row": 66171,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-18920",
+      "source_row": 18920,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-23703",
+      "source_row": 23703,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-36362",
+      "source_row": 36362,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-02304",
+      "source_row": 2304,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-13867",
+      "source_row": 13867,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-04990",
+      "source_row": 4990,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-42821",
+      "source_row": 42821,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-34895",
+      "source_row": 34895,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-44168",
+      "source_row": 44168,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-49149",
+      "source_row": 49149,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-66421",
+      "source_row": 66421,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-03784",
+      "source_row": 3784,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-67822",
+      "source_row": 67822,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-48055",
+      "source_row": 48055,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-03487",
+      "source_row": 3487,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-14502",
+      "source_row": 14502,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-47501",
+      "source_row": 47501,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-15229",
+      "source_row": 15229,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-39951",
+      "source_row": 39951,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-23070",
+      "source_row": 23070,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-10506",
+      "source_row": 10506,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-61720",
+      "source_row": 61720,
+      "source_category": "Transportation"
+    },
+    {
+      "id": "dodata-v2-row-38203",
+      "source_row": 38203,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-18210",
+      "source_row": 18210,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-33372",
+      "source_row": 33372,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-01516",
+      "source_row": 1516,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-13383",
+      "source_row": 13383,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-19569",
+      "source_row": 19569,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-67851",
+      "source_row": 67851,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-67181",
+      "source_row": 67181,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-20829",
+      "source_row": 20829,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-11122",
+      "source_row": 11122,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-60269",
+      "source_row": 60269,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-09307",
+      "source_row": 9307,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-43387",
+      "source_row": 43387,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-15173",
+      "source_row": 15173,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-30498",
+      "source_row": 30498,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-45500",
+      "source_row": 45500,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-05217",
+      "source_row": 5217,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-41401",
+      "source_row": 41401,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-00358",
+      "source_row": 358,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-44071",
+      "source_row": 44071,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-22194",
+      "source_row": 22194,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-32993",
+      "source_row": 32993,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-05736",
+      "source_row": 5736,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-39758",
+      "source_row": 39758,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-13396",
+      "source_row": 13396,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-44591",
+      "source_row": 44591,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-47641",
+      "source_row": 47641,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-16715",
+      "source_row": 16715,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-60396",
+      "source_row": 60396,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-51448",
+      "source_row": 51448,
+      "source_category": "Travel"
+    },
+    {
+      "id": "dodata-v2-row-61119",
+      "source_row": 61119,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-33262",
+      "source_row": 33262,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-12737",
+      "source_row": 12737,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-65469",
+      "source_row": 65469,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-48684",
+      "source_row": 48684,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-50010",
+      "source_row": 50010,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-00342",
+      "source_row": 342,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-33279",
+      "source_row": 33279,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-58164",
+      "source_row": 58164,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-38908",
+      "source_row": 38908,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-57212",
+      "source_row": 57212,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-65779",
+      "source_row": 65779,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-38763",
+      "source_row": 38763,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-29984",
+      "source_row": 29984,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-16791",
+      "source_row": 16791,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-35537",
+      "source_row": 35537,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-03308",
+      "source_row": 3308,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-30237",
+      "source_row": 30237,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-41296",
+      "source_row": 41296,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-13852",
+      "source_row": 13852,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-34207",
+      "source_row": 34207,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-13577",
+      "source_row": 13577,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-66948",
+      "source_row": 66948,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-03368",
+      "source_row": 3368,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-45624",
+      "source_row": 45624,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-06455",
+      "source_row": 6455,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-42785",
+      "source_row": 42785,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-64786",
+      "source_row": 64786,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-23889",
+      "source_row": 23889,
+      "source_category": "Utilities"
+    },
+    {
+      "id": "dodata-v2-row-22713",
+      "source_row": 22713,
+      "source_category": "Utilities"
+    }
+  ]
+}

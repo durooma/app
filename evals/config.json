@@ -1,0 +1,34 @@
+{
+  "models": [
+    {
+      "name": "openrouter-flash-lite",
+      "provider": "openrouter",
+      "model": "google/gemini-3.1-flash-lite",
+      "api_key_env": "OPENROUTER_API_KEY"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "production"
+    },
+    {
+      "name": "explicit",
+      "template_file": "prompts/explicit.txt"
+    }
+  ],
+  "batch_sizes": [
+    1,
+    15,
+    30
+  ],
+  "repeats": 1,
+  "seed": 42,
+  "timeout": "120s",
+  "request_interval": "250ms",
+  "concurrency": 8,
+  "retry": {
+    "max_attempts": 5,
+    "initial_backoff": "2s",
+    "max_backoff": "30s"
+  }
+}

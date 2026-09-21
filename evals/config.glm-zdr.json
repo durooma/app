@@ -1,0 +1,35 @@
+{
+  "models": [
+    {
+      "name": "glm-5.3-flash-zdr",
+      "provider": "openrouter",
+      "model": "z-ai/glm-5.3-flash",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "routing": {
+        "zdr": true,
+        "data_collection": "deny",
+        "only": [
+          "fireworks"
+        ]
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "production"
+    }
+  ],
+  "batch_sizes": [
+    15
+  ],
+  "repeats": 1,
+  "seed": 42,
+  "timeout": "120s",
+  "request_interval": "250ms",
+  "concurrency": 8,
+  "retry": {
+    "max_attempts": 5,
+    "initial_backoff": "2s",
+    "max_backoff": "30s"
+  }
+}

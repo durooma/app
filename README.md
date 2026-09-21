@@ -150,10 +150,24 @@ Batching currently groups transactions in ordinary Gemini `generateContent`
 requests. It does not submit jobs to the provider's separate asynchronous Batch
 API. No real provider requests are needed to run the automated tests.
 
+## Categorization evals
+
+Compare models, prompt templates, and batch sizes against a fixed labeled
+dataset with `go run ./cmd/eval`. Start with `go run ./cmd/eval -dry-run` to
+validate the combined 770-case suite and see the request count without API
+calls. The eval configs use OpenRouter with 8 workers, 250ms request spacing
+and retries for transient failures. The runner saves overall and per-source scores,
+confidence slices, failures, latency, and individual predictions without
+connecting to the database or changing categories.
+See [the eval guide](evals/README.md) for model configuration, reviewed datasets,
+pacing, and interpreting results.
+
 ## Architecture
 
 ```
 cmd/server            entrypoint (config, DB, migrations, graceful shutdown)
+cmd/eval              categorization comparison CLI
+internal/eval         labeled datasets, experiment matrix, scoring, reports
 internal/config       env-based configuration
 internal/db           pgx pool + embedded SQL migrations (no external tooling)
 internal/models       domain types

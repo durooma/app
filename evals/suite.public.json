@@ -1,0 +1,17 @@
+{
+  "name": "public-and-authored-categorization-v1",
+  "datasets": [
+    {
+      "path": "dataset.example.json",
+      "source": "synthetic"
+    },
+    {
+      "path": "dataset.expanded.json",
+      "source": "synthetic"
+    },
+    {
+      "path": "dataset.public-us.json",
+      "source": "public-us"
+    }
+  ]
+}
