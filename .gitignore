@@ -7,3 +7,6 @@
 
 # Isolated eval API credentials
 /.eval-env
+
+# Server credential encryption key (local installations)
+/.durooma/

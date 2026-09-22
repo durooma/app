@@ -1,22 +1,77 @@
 {{define "content"}}
 <div class="page-head"><div><p class="eyebrow">Preferences</p><h1>Settings</h1><p class="page-description">Make Durooma work the way you do.</p></div></div>
 {{if .Saved}}<div class="alert ok" role="status">Settings saved.</div>{{end}}
+{{if .KeyRemoved}}<div class="alert ok" role="status">API key removed. Auto-categorization is off.</div>{{end}}
 <section class="form-panel settings-panel">
     <h2>Categorization</h2>
+    <p class="muted">Use your own OpenRouter account for manual and background categorization. Requests are billed to your account and use providers with zero data retention.</p>
+    {{if .SettingsError}}<div class="alert error" role="alert">{{.SettingsError}}</div>{{end}}
     <form method="post" action="/settings" class="stack">
-        <label for="background-categorization">Background categorization
-            <select id="background-categorization" name="background_categorization" aria-describedby="background-help">
-                <option value="" {{if not .BackgroundEnabled}}selected{{end}}>Off</option>
-                <option value="on" {{if .BackgroundEnabled}}selected{{end}}>On</option>
+        {{if .Settings.HasKey}}
+        <ul class="saved-keys" aria-label="Saved API keys">
+            <li class="saved-key">
+                <div><strong>OpenRouter API key</strong><span class="muted">A key is saved · ••••••••</span></div>
+                <button type="submit" form="remove-api-key-form" class="remove-key" aria-label="Remove OpenRouter API key" title="Remove API key and turn off auto-categorization"><span aria-hidden="true">×</span></button>
+            </li>
+        </ul>
+        <p id="key-help" class="muted">Your key is encrypted and never shown again. Remove it to enter a different key. Removing it immediately turns off auto-categorization.</p>
+        {{else}}
+        <label for="api-key">OpenRouter API key
+            <input id="api-key" name="api_key" type="password" autocomplete="new-password" maxlength="512" spellcheck="false" autocapitalize="none" aria-describedby="key-help" {{if .KeyRemoved}}autofocus{{end}}>
+        </label>
+        <p id="key-help" class="muted">No key saved. Add one to enable categorization. Keys are encrypted when stored and are never shown again. <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">Create an OpenRouter key</a>.</p>
+        {{end}}
+        <label for="ai-model">OpenRouter model
+            <select id="ai-model" name="ai_model" aria-describedby="model-cost-help">
+                {{range .ModelChoices}}<option value="{{.ID}}" {{if eq $.Settings.Model .ID}}selected{{end}}>{{.Name}} · ≈ {{.EstimatedCost}} / 1,000 transactions</option>{{end}}
+                <option value="custom" {{if .CustomModel}}selected{{end}}>Custom model · cost unavailable</option>
             </select>
         </label>
-        <p id="background-help" class="muted">Automatically categorize uncategorized transactions, including new imports, while the server is running. Off by default.</p>
-        {{if not .AIReady}}<p class="muted">AI is not configured. You can save this preference now; automatic processing can start once an AI provider and API key are configured.</p>{{end}}
-        <p class="muted">Turning this off stops automatic processing and keeps completed categories. You can still start categorization manually.</p>
+        <label id="custom-model-field" for="ai-custom-model">Custom OpenRouter model ID
+            <input id="ai-custom-model" name="ai_custom_model" value="{{if .CustomModel}}{{.Settings.Model}}{{end}}" maxlength="200" placeholder="provider/model" spellcheck="false">
+            <span class="muted">Used only when Custom model is selected. Zero data retention is still required.</span>
+        </label>
+        <p id="model-cost-help" class="muted">Estimated USD per 1,000 transactions sent to AI, at 15 transactions per request. Actual costs vary by model, provider, reasoning, and batch size.</p>
+        <details>
+            <summary>How costs are estimated</summary>
+            <p class="muted">All models use the same illustrative workload: 46,000 input and 64,000 output tokens, including reasoning, per 1,000 transactions. This is rounded from our GLM eval; it is not a measured cost for every model. Estimates exclude retries, cache discounts, and credit purchase fees. Transactions handled by rules do not incur model charges.</p>
+            <p class="muted">Reference prices checked September 22, 2026, in USD per million input / output tokens:
+                <a href="https://openrouter.ai/deepseek/deepseek-v4.1-flash" target="_blank" rel="noopener noreferrer">DeepSeek (Fireworks): $0.22 / $0.66</a>;
+                <a href="https://openrouter.ai/z-ai/glm-5.3-flash" target="_blank" rel="noopener noreferrer">GLM (Fireworks): $0.15 / $0.50</a>;
+                <a href="https://openrouter.ai/google/gemini-3.1-flash-lite" target="_blank" rel="noopener noreferrer">Gemini (Google): $0.25 / $1.50</a>.
+                OpenRouter may route to a different eligible provider. These estimates are not a spending limit.
+            </p>
+        </details>
+        <label for="background-categorization">Background categorization
+            <select id="background-categorization" name="background_categorization" aria-describedby="background-help">
+                <option value="" {{if not .Settings.Background}}selected{{end}}>Off</option>
+                <option value="on" {{if .Settings.Background}}selected{{end}}>On</option>
+            </select>
+        </label>
+        <p id="background-help" class="muted">Automatically categorize uncategorized transactions, including new imports, while the server is running. Requires your saved API key. Off by default.</p>
+        <details>
+            <summary>Request limits</summary>
+            <div class="stack">
+                <label for="ai-interval">Minimum time between requests (milliseconds)
+                    <input id="ai-interval" type="number" name="ai_interval_ms" value="{{.Settings.IntervalMS}}" min="10" max="86400000" required>
+                </label>
+                <p class="muted">Default: 250 ms, up to 4 requests per second. Shared by manual runs, background runs, and retries.</p>
+                <label for="ai-concurrency">Maximum concurrent requests
+                    <input id="ai-concurrency" type="number" name="ai_concurrency" value="{{.Settings.Concurrency}}" min="1" max="32" required>
+                </label>
+                <label for="ai-batch-size">Transactions per request
+                    <input id="ai-batch-size" type="number" name="ai_batch_size" value="{{.Settings.BatchSize}}" min="1" max="100" required>
+                </label>
+                <p class="muted">Defaults: 8 concurrent requests and 15 transactions per request. Lower these limits to match your OpenRouter allowance. These controls do not set a spending cap.</p>
+            </div>
+        </details>
+        <p class="muted">Saving changes stops active categorization runs. Completed categories are kept. With a saved key, manual categorization remains available when background processing is off.</p>
         <button type="submit">Save settings</button>
     </form>
+    {{if .Settings.HasKey}}<form id="remove-api-key-form" method="post" action="/settings/api-key/remove"></form>{{end}}
     {{if .BackgroundEnabled}}{{template "categorization-coverage" .Coverage}}{{end}}
 </section>
+<script src="/static/settings.js" defer></script>
 {{end}}
 
 

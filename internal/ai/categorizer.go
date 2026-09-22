@@ -1,11 +1,13 @@
 // Package ai provides provider-agnostic transaction categorization. A rules
 // pass runs first (cheap, deterministic); anything left is delegated to a
-// pluggable LLM Provider (Gemini by default).
+// pluggable LLM Provider. The app uses user-provided OpenRouter credentials.
 package ai
 
 import (
 	"context"
+	"errors"
 	"strings"
+	"sync"
 
 	"durooma/internal/models"
 )
@@ -39,10 +41,13 @@ type storeIface interface {
 }
 
 type Service struct {
-	store     storeIface
-	provider  Provider
-	batchSize int
-	gate      chan struct{}
+	store         storeIface
+	provider      Provider
+	batchSize     int
+	gate          chan struct{}
+	configuration func(context.Context) (RunConfig, error)
+	cancelMu      sync.Mutex
+	activeCancel  context.CancelFunc
 }
 
 func NewService(store storeIface, provider Provider) *Service {
@@ -52,6 +57,37 @@ func NewService(store storeIface, provider Provider) *Service {
 // NewServiceWithBatchSize configures the number of transactions per model request.
 func NewServiceWithBatchSize(store storeIface, provider Provider, batchSize int) *Service {
 	return &Service{store: store, provider: provider, batchSize: max(1, batchSize), gate: make(chan struct{}, 1)}
+}
+
+// RunConfig is resolved after acquiring the run lock, so queued work never
+// uses a stale credential requirement or concurrency setting.
+type RunConfig struct {
+	BatchSize, Concurrency int
+	Model                  string
+}
+
+func NewConfiguredService(st storeIface, p Provider, load func(context.Context) (RunConfig, error)) *Service {
+	s := NewService(st, p)
+	s.configuration = load
+	return s
+}
+func (s *Service) runConfig(ctx context.Context) (RunConfig, error) {
+	c := RunConfig{BatchSize: s.batchSize, Concurrency: 1}
+	var err error
+	if s.configuration != nil {
+		c, err = s.configuration(ctx)
+	}
+	if err == nil && (c.BatchSize < 1 || c.BatchSize > 100 || c.Concurrency < 1 || c.Concurrency > 32) {
+		err = errors.New("invalid categorization settings")
+	}
+	return c, err
+}
+func (s *Service) CancelActive() {
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	if s.activeCancel != nil {
+		s.activeCancel()
+	}
 }
 
 // Report summarises a categorization run.
@@ -99,13 +135,24 @@ func (s *Service) CategorizeWithProgress(ctx context.Context, txns []models.Tran
 	case <-ctx.Done():
 		return rep, ctx.Err()
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	s.cancelMu.Lock()
+	s.activeCancel = cancel
+	s.cancelMu.Unlock()
+	defer func() { cancel(); s.cancelMu.Lock(); s.activeCancel = nil; s.cancelMu.Unlock() }()
+	options, err := s.runConfig(ctx)
+	if err != nil {
+		return rep, err
+	}
+	if options.Model != "" {
+		rep.Provider = "openrouter/" + options.Model
+	}
 	ids := make([]int64, 0, len(txns))
 	for _, t := range txns {
 		if t.CategoryID == nil {
 			ids = append(ids, t.ID)
 		}
 	}
-	var err error
 	txns, err = s.store.PendingTransactions(ctx, ids)
 	if err != nil {
 		return rep, err
@@ -178,55 +225,98 @@ func (s *Service) CategorizeWithProgress(ctx context.Context, txns []models.Tran
 	}
 	progress()
 
-	// Pass 2: AI provider, batched. Cancellation is checked per batch: a batch
-	// is the smallest unit worth interrupting, since it maps to one provider
-	// round trip.
-	for i := 0; i < len(remaining); i += s.batchSize {
-		if err := ctx.Err(); err != nil {
-			return rep, err
-		}
-		end := min(i+s.batchSize, len(remaining))
-		batch := remaining[i:end]
-
-		items := make([]Item, len(batch))
-		for j, t := range batch {
-			items[j] = Item{Desc: t.Description, Amount: t.BaseAmount}
-		}
-
-		results, err := s.provider.Classify(ctx, items, defs)
-		if err != nil {
-			// An aborted run must stop here rather than racing through the
-			// remaining batches marking them all unresolved.
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return rep, ctxErr
-			}
-			// Leave this batch uncategorized rather than failing the whole run.
-			rep.Unresolved += len(batch)
-			done += len(batch)
-			progress()
-			continue
-		}
-		for j, t := range batch {
-			name := ""
-			if j < len(results) {
-				name = strings.TrimSpace(results[j])
-			}
-			cid, ok := validName[strings.ToLower(name)]
-			if !ok {
-				if fallback == 0 {
-					rep.Unresolved++
-					continue
-				}
-				cid = fallback
-			}
-			c := cid
-			if err := s.store.SetUncategorizedCategory(ctx, t.ID, &c); err != nil {
-				return rep, err
-			}
-			rep.ByAI++
-		}
-		done += len(batch)
-		progress()
+	// Provider calls run concurrently; only this goroutine applies results and
+	// publishes progress. The shared run lock prevents duplicate queue claims.
+	type response struct {
+		batch   []models.Transaction
+		names   []string
+		err     error
+		applied chan struct{}
 	}
+	jobs := make(chan []models.Transaction)
+	results := make(chan response)
+	var workers sync.WaitGroup
+	for n := 0; n < min(options.Concurrency, (len(remaining)+options.BatchSize-1)/options.BatchSize); n++ {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for batch := range jobs {
+				items := make([]Item, len(batch))
+				for i, t := range batch {
+					items[i] = Item{Desc: t.Description, Amount: t.BaseAmount}
+				}
+				names, err := s.provider.Classify(ctx, items, defs)
+				applied := make(chan struct{})
+				results <- response{batch, names, err, applied}
+				<-applied
+			}
+		}()
+	}
+	go func() {
+		defer close(jobs)
+		for i := 0; i < len(remaining); i += options.BatchSize {
+			select {
+			case <-ctx.Done():
+				return
+			case jobs <- remaining[i:min(i+options.BatchSize, len(remaining))]:
+			}
+		}
+	}()
+	go func() { workers.Wait(); close(results) }()
+	var runErr error
+	for result := range results {
+		func() {
+			defer close(result.applied)
+			if ctx.Err() != nil {
+				if runErr == nil {
+					runErr = ctx.Err()
+				}
+				return
+			}
+			var apiErr *APIError
+			rejected := errors.As(result.err, &apiErr) && (apiErr.Status == 401 || apiErr.Status == 402 || apiErr.Status == 403)
+			if errors.Is(result.err, ErrAPIKeyRequired) || errors.Is(result.err, ErrSettingsChanged) || rejected {
+				runErr = result.err
+				cancel()
+				return
+			}
+			if result.err != nil {
+				rep.Unresolved += len(result.batch)
+				done += len(result.batch)
+				progress()
+				return
+			}
+			for j, t := range result.batch {
+				name := ""
+				if j < len(result.names) {
+					name = strings.TrimSpace(result.names[j])
+				}
+				cid, ok := validName[strings.ToLower(name)]
+				if !ok {
+					if fallback == 0 {
+						rep.Unresolved++
+						continue
+					}
+					cid = fallback
+				}
+				c := cid
+				if err := s.store.SetUncategorizedCategory(ctx, t.ID, &c); err != nil {
+					runErr = err
+					cancel()
+					break
+				}
+				rep.ByAI++
+			}
+			done += len(result.batch)
+			progress()
+		}()
+	}
+	if runErr != nil {
+		return rep, runErr
+	}
+	if ctx.Err() != nil {
+		return rep, ctx.Err()
+	}
+
 	return rep, nil
 }

@@ -68,6 +68,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /settings", s.handleSettings)
 	mux.HandleFunc("GET /settings/categorization-coverage", s.handleCategorizationCoverage)
 	mux.HandleFunc("POST /settings", s.handleSaveSettings)
+	mux.HandleFunc("POST /settings/api-key/remove", s.handleRemoveAPIKey)
 
 	// Categories
 	mux.HandleFunc("GET /categories", s.handleCategories)
@@ -93,7 +94,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /reports", s.handleReports)
 	mux.HandleFunc("GET /reports/{path...}", s.handleLegacyReport)
 
-	return logRequests(mux)
+	return http.NewCrossOriginProtection().Handler(logRequests(mux))
 }
 
 func logRequests(next http.Handler) http.Handler {

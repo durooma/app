@@ -15,6 +15,7 @@ import (
 	"durooma/internal/db"
 	"durooma/internal/fx"
 	"durooma/internal/importer"
+	"durooma/internal/secrets"
 	"durooma/internal/store"
 	"durooma/internal/web"
 )
@@ -45,25 +46,32 @@ func run() error {
 	}
 	log.Printf("database ready, migrations applied")
 
-	st := store.New(pool)
-	conv := fx.New(st, cfg.FXBaseURL)
-	imp := importer.New(st, conv, cfg.BaseCurrency)
-
-	provider, err := ai.NewProvider(cfg.AIProvider, cfg.AIAPIKey, cfg.AIModel)
+	vault, err := secrets.LoadOrCreate(cfg.CredentialsKeyFile)
 	if err != nil {
 		return err
 	}
-	paced := ai.NewPacedProvider(provider, st, cfg.AIRequestInterval, cfg.AIRequestsPerDay)
-	aiSvc := ai.NewServiceWithBatchSize(st, paced, cfg.AIBatchSize)
+	st := store.NewWithVault(pool, vault)
+	if _, err = st.OpenRouterKey(ctx, store.LocalUserID); err != nil {
+		return err
+	}
+	conv := fx.New(st, cfg.FXBaseURL)
+	imp := importer.New(st, conv, cfg.BaseCurrency)
 
-	background := ai.NewBackgroundControl(func(ctx context.Context) (bool, error) {
-		if !cfg.AIReady() {
-			return false, nil
+	provider := ai.NewUserProvider(st, store.LocalUserID)
+	aiSvc := ai.NewConfiguredService(st, provider, func(ctx context.Context) (ai.RunConfig, error) {
+		settings, err := st.AISettings(ctx, store.LocalUserID)
+		if err != nil {
+			return ai.RunConfig{}, err
 		}
-		return st.BackgroundCategorizationEnabled(ctx, store.LocalUserID)
-	}, func(ctx context.Context) {
-		ai.RunBackground(ctx, st, aiSvc, cfg.AIPollInterval)
-	}, cfg.AIPollInterval)
+		if !settings.HasKey {
+			return ai.RunConfig{}, ai.ErrAPIKeyRequired
+		}
+		return ai.RunConfig{BatchSize: settings.BatchSize, Concurrency: settings.Concurrency, Model: settings.Model}, nil
+	})
+	background := ai.NewBackgroundControl(func(ctx context.Context) (bool, error) {
+		settings, err := st.AISettings(ctx, store.LocalUserID)
+		return settings.HasKey && settings.Background, err
+	}, func(ctx context.Context) { ai.RunBackground(ctx, st, aiSvc, cfg.AIPollInterval) }, cfg.AIPollInterval)
 
 	srv, err := web.NewServer(cfg, st, imp, aiSvc, conv, background)
 	if err != nil {
@@ -82,7 +90,7 @@ func run() error {
 	}
 
 	go func() {
-		log.Printf("listening on %s (base currency %s, AI provider %s)", cfg.HTTPAddr, cfg.BaseCurrency, cfg.AIProvider)
+		log.Printf("listening on %s (base currency %s, AI provider %s)", cfg.HTTPAddr, cfg.BaseCurrency, "OpenRouter (user credentials)")
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("http server: %v", err)
 		}

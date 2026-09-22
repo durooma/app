@@ -40,13 +40,10 @@ services:
       DATABASE_URL: postgres://durooma:${POSTGRES_PASSWORD:-durooma}@db:5432/durooma?sslmode=disable
       HTTP_ADDR: ":8080"
       BASE_CURRENCY: ${BASE_CURRENCY:-CHF}
-      AI_PROVIDER: ${AI_PROVIDER:-gemini}
-      AI_MODEL: ${AI_MODEL:-gemini-3.1-flash-lite}
-      AI_API_KEY: ${AI_API_KEY:-}
-      AI_BATCH_SIZE: ${AI_BATCH_SIZE:-30}
-      AI_REQUESTS_PER_DAY: ${AI_REQUESTS_PER_DAY:-1500}
-      AI_REQUEST_INTERVAL: ${AI_REQUEST_INTERVAL:-57.6s}
+      CREDENTIALS_KEY_FILE: /home/app/.durooma/credentials.key
       AI_POLL_INTERVAL: ${AI_POLL_INTERVAL:-30s}
+    volumes:
+      - app-secrets:/home/app/.durooma
     ports:
       - "${HTTP_PORT:-8080}:8080"
     deploy:
@@ -56,3 +53,4 @@ services:
 
 volumes:
   db-data:
+  app-secrets:

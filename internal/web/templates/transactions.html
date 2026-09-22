@@ -26,8 +26,10 @@
 {{if .AutoCategorization}}
 <p class="muted">Uncategorized transactions are processed automatically in the background.
 You can keep browsing and reload to see new categories. Manual runs share the same request budget. <a href="/settings">Settings</a></p>
-{{else}}
+{{else if .AIEnabled}}
 <p class="muted">To categorize transactions automatically, enable background categorization in <a href="/settings">Settings</a>.</p>
+{{else}}
+<p class="muted">Add your OpenRouter API key in <a href="/settings">Settings</a> to enable categorization.</p>
 {{end}}
 <form method="get" action="/transactions" class="filters">
 	{{$f := .Filter}}

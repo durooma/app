@@ -42,10 +42,12 @@
 	{{if .AutoCategorization}}
     <p class="muted">New transactions will be categorized automatically in the background.
     Check their progress in <a href="/transactions?uncategorized=1">Transactions</a>.</p>
-    {{else}}
+    {{else if .AIEnabled}}
     <p class="muted">Once imported, head to <a href="/transactions?uncategorized=1">Transactions</a>
 	to auto-categorize with <strong>Categorize all</strong>, or enable background
     categorization in <a href="/settings">Settings</a>.</p>
+    {{else}}
+    <p class="muted">Add your OpenRouter API key in <a href="/settings">Settings</a> to categorize imported transactions.</p>
     {{end}}
 </aside></section>
 

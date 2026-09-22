@@ -11,16 +11,17 @@ import (
 // currency), plus any in-flight categorization run so its progress bar is
 // rendered server-side on whichever page the user happens to be on.
 func (s *Server) base(ctx context.Context, title, active string) map[string]any {
-	enabled, err := s.store.BackgroundCategorizationEnabled(ctx, store.LocalUserID)
+	settings, err := s.store.AISettings(ctx, store.LocalUserID)
 	if err != nil {
-		enabled = false
+		settings.HasKey = false
 	}
 	return map[string]any{
 		"Title":              title,
 		"Nav":                active,
 		"BaseCurrency":       s.cfg.BaseCurrency,
-		"AIProvider":         s.cfg.AIProvider,
-		"AutoCategorization": enabled && s.cfg.AIReady(),
+		"AIEnabled":          settings.HasKey,
+		"AIProvider":         "OpenRouter",
+		"AutoCategorization": settings.Background && settings.HasKey,
 		"CatJob":             s.catJob.status(),
 	}
 }

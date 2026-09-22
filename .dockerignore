@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+.eval-env
+.durooma
+evals/local
+evals/runs
+tmp
+durooma
+*.key
+*.pem

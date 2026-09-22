@@ -24,5 +24,5 @@ type Noop struct{}
 func (Noop) Name() string { return "disabled" }
 
 func (Noop) Classify(context.Context, []Item, []CategoryDef) ([]string, error) {
-	return nil, fmt.Errorf("AI categorization is disabled (set AI_PROVIDER and AI_API_KEY)")
+	return nil, fmt.Errorf("AI categorization is disabled (add your OpenRouter API key in Settings)")
 }

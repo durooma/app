@@ -17,7 +17,14 @@ type backgroundStore interface {
 // hook is needed; unfinished work is rediscovered after a server restart.
 func RunBackground(ctx context.Context, st backgroundStore, svc *Service, poll time.Duration) {
 	for ctx.Err() == nil {
-		txns, err := st.DueCategorization(ctx, svc.batchSize)
+		options, err := svc.runConfig(ctx)
+		if err != nil {
+			if !wait(ctx, poll) {
+				return
+			}
+			continue
+		}
+		txns, err := st.DueCategorization(ctx, options.BatchSize*options.Concurrency)
 		if err == nil && len(txns) > 0 {
 			var rep Report
 			rep, err = svc.Categorize(ctx, txns)

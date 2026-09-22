@@ -33,16 +33,17 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
   Equity Awards exports, with automatic format detection and dedup by a
   date/description/amount hash.
 - **Auto-categorization** — deterministic substring rules first, then a pluggable
-  LLM provider (Gemini by default) for the rest. An optional persistent background
+  user-configured OpenRouter model for the rest (DeepSeek V4.1 Flash by default).
+  Your own API key is required. An optional persistent background
   worker picks up uncategorized transactions with paced requests and retries.
   Enable it in **Settings**; it defaults to off.
 
 ## Quick start (Docker)
 
 ```sh
-cp .env.example .env        # set POSTGRES_PASSWORD, AI_API_KEY, etc.
+cp .env.example .env        # set POSTGRES_PASSWORD, etc.
 docker compose up --build -d
-# open http://localhost:8080
+# open http://localhost:8080, then add your OpenRouter key in Settings
 ```
 
 Postgres is capped at 256 MB and the app at 128 MB in `docker-compose.yml`, so
@@ -57,7 +58,7 @@ make test    # unit tests
 
 # Integration tests need a database:
 DUROOMA_TEST_DB=postgres://durooma:durooma@localhost:5433/durooma?sslmode=disable \
-  go test ./internal/store/ ./internal/importer/
+  go test -p 1 ./internal/store/ ./internal/importer/ ./internal/web/
 ```
 
 ## Configuration (environment variables)
@@ -67,12 +68,7 @@ DUROOMA_TEST_DB=postgres://durooma:durooma@localhost:5433/durooma?sslmode=disabl
 | `DATABASE_URL` | `postgres://durooma:durooma@localhost:5432/durooma?sslmode=disable` | Postgres connection |
 | `HTTP_ADDR` | `:8080` | Listen address |
 | `BASE_CURRENCY` | `CHF` | Currency all reports normalise to |
-| `AI_PROVIDER` | `gemini` | `gemini` or `none` |
-| `AI_MODEL` | `gemini-3.1-flash-lite` | Model id |
-| `AI_API_KEY` | — | LLM API key (required if AI enabled) |
-| `AI_BATCH_SIZE` | `30` | Transactions grouped in each model request (1–100) |
-| `AI_REQUESTS_PER_DAY` | `1500` | Shared request allowance, evenly paced across 24 hours (1–86400) |
-| `AI_REQUEST_INTERVAL` | `57.6s` | Minimum gap between requests; daily allowance may increase it |
+| `CREDENTIALS_KEY_FILE` | `.durooma/credentials.key` | Private server encryption key; created on first startup. Docker uses the persistent `app-secrets` volume. |
 | `AI_POLL_INTERVAL` | `30s` | How often the background worker looks for work |
 | `FX_BASE_URL` | `https://api.frankfurter.app` | Historical FX rate source |
 
@@ -105,51 +101,78 @@ name blank when importing separate Individual and Joint Tenant files so each is
 named from its own header and they stay distinct — a name entered on the form
 applies to every file in that upload and merges them into one account.
 
-## Background categorization
+## OpenRouter credentials and categorization
 
-Background categorization is **off by default**. Turn it on in **Settings →
-Categorization**. This preference is saved in Postgres for the current user and
-applies without a server restart. The app currently has one local user and no
-login system; the preference belongs to that user across browsers. It does not
-introduce multi-user authentication or separate transaction ownership.
+In **Settings → Categorization**, save your own OpenRouter API key. Both manual
+and background auto-categorization require it; ordinary manual category edits
+and imports remain available without a key. A saved key appears as a masked list
+item. Its **×** button immediately removes the key, turns background processing
+off, and restores the key input so a replacement can be saved. Other saved
+preferences are preserved. Keys are never returned to the browser. Requests use
+OpenRouter with `zdr: true` and `data_collection: "deny"`; a model without an
+eligible endpoint fails rather than relaxing these privacy constraints.
 
-While enabled, Settings shows categorization coverage: assigned categories out
-of all transactions, the percentage covered, and how many remain. It refreshes
-every five seconds and includes manual, rule-based, and AI assignments.
+The default model is `deepseek/deepseek-v4.1-flash`. The model selector also offers
+GLM 5.3 Flash and Gemini 3.1 Flash Lite through OpenRouter, plus a custom model ID.
+Each preset shows an illustrative USD cost per 1,000 transactions at batch size
+15, using a shared workload of 46,000 input and 64,000 output tokens (including
+reasoning), rounded from the GLM eval. The expanded cost explanation links the
+dated reference prices; estimates are not measurements for every model, live
+quotes, or spending limits. Actual token usage and ZDR provider rates can differ.
+Users can change the model,
+minimum request spacing (**250 ms**, up to 4 requests/second), concurrency
+(**8**, range 1–32), and batch size (**15**, range 1–100) in Settings. There is no
+application daily request cap. These settings share a durable per-owner pacing
+budget across manual runs, background work and retries. Provider rate limits
+still apply; request limits are not spending limits. Saving settings cancels
+active categorization runs; completed categories remain, and the next run uses
+the new settings. Manual runs are serialized with background runs to avoid
+processing the same transactions twice; provider calls within a run are parallel.
+Run one app instance per database.
 
-When enabled and an AI provider and API key are configured, the worker discovers
-both existing uncategorized transactions and new imports. Postgres stores
-per-transaction retry times and the shared next-request time, so restarting the server resumes pending work without
-resetting the request budget. Run one app instance per database; the service
-serializes automatic and manual runs within that instance.
+Background processing is off by default and can only be enabled with a saved
+key. It discovers existing uncategorized transactions and new imports, polling
+every 30 seconds. The Settings coverage indicator updates every five seconds.
+Transient HTTP 408/429/5xx and network failures retry up to five attempts with a
+shared exponential cooldown (2–30 seconds, or longer for `Retry-After`). Each
+attempt has a 120-second timeout. Invalid model outputs are not retried; they
+remain uncategorized. Unresolved transactions have a persisted retry delay of
+5 minutes up to 24 hours. Existing categories, including concurrent manual edits,
+are never overwritten. Aborting a manual run preserves completed assignments;
+an enabled background worker may later pick up remaining work.
 
-Defaults pace 1,500 requests evenly across 24 hours (one every 57.6 seconds),
-with up to 30 transactions per request: about 45,000 transactions per day, or
-1,875 per hour on average. Rule matches consume no API calls. This
-is a local request budget, not a token or spending limit, and does not account
-for other applications using the same API key. Set the budget to match your
-provider quota. Increasing it still respects `AI_REQUEST_INTERVAL`.
+### Credential storage and deployment
 
-Failed requests extend a shared exponential cooldown, honoring HTTP Retry-After.
-Unresolved transactions get their own exponential retry delay (5 minutes up to
-24 hours), letting other work proceed. Retry times and categories survive
-restarts; an interrupted API request may be retried and billed again. Model
-responses must contain one result per transaction. Automatic writes never
-replace an already assigned category, including edits made while a call runs.
+API keys are encrypted with AES-256-GCM using fresh random nonces and the owner
+ID as authenticated context. Only ciphertext goes into Postgres. The server's
+32-byte encryption key is stored separately in an owner-only (0600) file, created
+atomically on first startup. Docker runs as the unprivileged `app` user and keeps
+this file in the **`app-secrets` volume**. Local runs use the gitignored
+`.durooma/credentials.key`; set `CREDENTIALS_KEY_FILE` to use another protected
+location. No provider key or encryption key is bundled into the image.
 
-Manual **Categorize all** keeps its progress bar and Abort control and uses the
-same budget. The single-transaction AI button also starts a background run so
-quota waits do not hold a page request open. Only one manual run is active at a
-time. It can take time while waiting for quota. Abort stops that manual run only; the automatic worker may pick up its remaining transactions later.
-Turn **Background categorization** off in Settings to cancel automatic work,
-including quota waits and in-flight requests. Categories already saved are kept,
-and manual runs remain available. The worker also stays off with
-`AI_PROVIDER=none` or a missing API key; a saved preference is retained until AI
-is configured. Refresh a page to see completed categories; the automatic worker does not show a persistent progress bar.
+Back up the server encryption key separately from the database. Keep the same
+key file when moving or restoring an installation. Losing it makes existing API
+keys unreadable; a mismatched key causes startup to fail rather than silently
+using another credential. Treat access to both the database and server key as
+access to the API credentials. Restrict database/backup and host access.
 
-Batching currently groups transactions in ordinary Gemini `generateContent`
-requests. It does not submit jobs to the provider's separate asynchronous Batch
-API. No real provider requests are needed to run the automated tests.
+This remains a **single-user installation without built-in login**. The `local`
+owner is selected by the server, never from a form or query parameter; all browsers
+that can access the app share that owner's settings. For network access, place
+the app behind an authenticated HTTPS reverse proxy or VPN. Browser POST requests
+have cross-origin protection; this does not replace authentication. Settings
+responses are marked `no-store`, submitted keys are never reflected, and provider
+errors do not contain request payloads or credentials.
+
+### Upgrading from the shared API key
+
+`AI_API_KEY`, `AI_PROVIDER`, `AI_MODEL`, `AI_BATCH_SIZE`, `AI_REQUESTS_PER_DAY`,
+and `AI_REQUEST_INTERVAL` are deprecated and **ignored** by the server. They are
+not copied into user settings and never act as a fallback. The migration disables
+the old background preference; add your own key and opt in again through Settings.
+Remove obsolete values from deployment configuration. `OPENROUTER_API_KEY` in
+`.eval-env` remains exclusively for the separate eval CLI.
 
 ## Categorization evals
 

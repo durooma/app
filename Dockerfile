@@ -13,6 +13,8 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /durooma ./cmd/server
 # --- Runtime stage ---
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata && adduser -D -u 10001 app
+RUN mkdir -p /home/app/.durooma && chown app:app /home/app/.durooma && chmod 700 /home/app/.durooma
+WORKDIR /home/app
 USER app
 COPY --from=build /durooma /usr/local/bin/durooma
 EXPOSE 8080

@@ -96,7 +96,6 @@ func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[strin
 		"period":         r.FormValue("period"),
 		"sign":           r.FormValue("sign"),
 	}
-	data["AIEnabled"] = s.cfg.AIEnabled()
 
 	// When drilling into a period, expose each transaction's amortized share of
 	// that period so amortized rows can show it alongside the full amount. The
@@ -137,6 +136,9 @@ const maxCategorizeRun = 5000
 // than holding it open; the bar polls handleCategorizeStatus for the outcome.
 // Existing categorizations are left untouched by the AI service.
 func (s *Server) handleCategorizeAll(w http.ResponseWriter, r *http.Request) {
+	if !s.requireCategorizationKey(w, r) {
+		return
+	}
 	// Categorize across the whole matching set (not just the current page) but
 	// only the still-uncategorized ones.
 	catFilter := txnFilterFromRequest(r)
@@ -192,6 +194,9 @@ func (s *Server) renderCatProgress(w http.ResponseWriter) {
 // handleCategorizeOne uses the background job too: even one transaction may
 // need to wait for the shared quota, so it must not hold an HTTP request open.
 func (s *Server) handleCategorizeOne(w http.ResponseWriter, r *http.Request) {
+	if !s.requireCategorizationKey(w, r) {
+		return
+	}
 	ctx := r.Context()
 	id, err := int64PathValue(r, "id")
 	if err != nil {
@@ -272,4 +277,17 @@ func (s *Server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	w.WriteHeader(http.StatusOK) // HTMX removes the row
+}
+
+func (s *Server) requireCategorizationKey(w http.ResponseWriter, r *http.Request) bool {
+	settings, err := s.store.AISettings(r.Context(), store.LocalUserID)
+	if err != nil {
+		http.Error(w, "Could not load categorization settings", http.StatusInternalServerError)
+		return false
+	}
+	if !settings.HasKey {
+		http.Error(w, "Add your OpenRouter API key in Settings to enable categorization", http.StatusForbidden)
+		return false
+	}
+	return true
 }

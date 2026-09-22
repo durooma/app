@@ -1,46 +1,35 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
 
-func TestBackgroundConfiguration(t *testing.T) {
-	for _, key := range []string{"AI_BATCH_SIZE", "AI_REQUESTS_PER_DAY", "AI_REQUEST_INTERVAL", "AI_POLL_INTERVAL"} {
+func TestLegacyAIEnvironmentIsIgnored(t *testing.T) {
+	for _, key := range []string{"AI_PROVIDER", "AI_API_KEY", "AI_MODEL", "AI_BATCH_SIZE", "AI_REQUESTS_PER_DAY", "AI_REQUEST_INTERVAL", "AI_POLL_INTERVAL", "CREDENTIALS_KEY_FILE"} {
 		t.Setenv(key, "")
 	}
-	t.Setenv("AI_API_KEY", "test-key")
-	t.Setenv("AI_PROVIDER", "gemini")
-	cfg, err := Load()
+	baseline, err := Load()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.AIReady() || cfg.AIBatchSize != 30 || cfg.AIRequestsPerDay != 1500 || cfg.AIRequestInterval != 57600*time.Millisecond || cfg.AIPollInterval != 30*time.Second {
-		t.Fatal("incorrect background defaults")
+	for _, key := range []string{"AI_PROVIDER", "AI_API_KEY", "AI_MODEL", "AI_BATCH_SIZE", "AI_REQUESTS_PER_DAY", "AI_REQUEST_INTERVAL"} {
+		t.Setenv(key, "legacy-value-must-not-be-used")
 	}
-	for _, provider := range []string{"none", "disabled"} {
-		cfg.AIProvider = provider
-		if cfg.AIReady() {
-			t.Fatalf("enabled for %s", provider)
-		}
+	got, err := Load()
+	if err != nil {
+		t.Fatal(err)
 	}
-	cfg.AIProvider, cfg.AIAPIKey = "gemini", ""
-	if cfg.AIReady() {
-		t.Fatal("enabled without credentials")
+	if !reflect.DeepEqual(got, baseline) || got.AIPollInterval != 30*time.Second || got.CredentialsKeyFile != ".durooma/credentials.key" {
+		t.Fatal("legacy AI config changed runtime defaults")
 	}
-
 }
-
-func TestInvalidBackgroundConfiguration(t *testing.T) {
-	for key, value := range map[string]string{
-		"AI_BATCH_SIZE": "101", "AI_REQUESTS_PER_DAY": "0",
-		"AI_REQUEST_INTERVAL": "0s", "AI_POLL_INTERVAL": "-1m",
-	} {
-		t.Run(key, func(t *testing.T) {
-			t.Setenv(key, value)
-			if _, err := Load(); err == nil {
-				t.Fatalf("accepted %s=%s", key, value)
-			}
-		})
+func TestInvalidPollInterval(t *testing.T) {
+	for _, v := range []string{"0s", "-1m", "bad", "25h"} {
+		t.Setenv("AI_POLL_INTERVAL", v)
+		if _, err := Load(); err == nil {
+			t.Fatalf("accepted %q", v)
+		}
 	}
 }

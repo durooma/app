@@ -3,6 +3,7 @@
 package store
 
 import (
+	"durooma/internal/secrets"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -10,7 +11,8 @@ import (
 )
 
 type Store struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	vault *secrets.Vault
 }
 
 func New(pool *pgxpool.Pool) *Store {
@@ -21,4 +23,10 @@ func (s *Store) Pool() *pgxpool.Pool { return s.pool }
 
 func isNoRows(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
+}
+
+// NewWithVault enables encrypted user credentials. New remains useful for stores
+// that never access credentials (imports, reports, tests).
+func NewWithVault(pool *pgxpool.Pool, vault *secrets.Vault) *Store {
+	return &Store{pool: pool, vault: vault}
 }

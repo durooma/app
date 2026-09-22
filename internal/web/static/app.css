@@ -133,8 +133,15 @@ button .icon, .button .icon { width: 16px; height: 16px; }
 .tiny { width: 80px; }
 .stack { display: flex; flex-direction: column; gap: 18px; max-width: 540px; }
 .stack label { display: flex; flex-direction: column; gap: 8px; font-size: 12px; font-weight: 500; }
+.stack label[hidden] { display: none; }
 .stack p { font-size: 12px; margin: 0; line-height: 1.7; }
 .stack > button { align-self: flex-start; }
+.saved-keys { list-style: none; margin: 0; padding: 0; }
+.saved-key { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel-2); }
+.saved-key strong, .saved-key span.muted { display: block; font-size: 12px; }
+.saved-key span.muted { margin-top: 5px; }
+.saved-key .remove-key { flex-shrink: 0; width: 38px; padding: 0; background: transparent; color: var(--muted); font-size: 22px; }
+.saved-key .remove-key:hover { background: var(--panel); color: var(--text); }
 .editable input, .editable select { width: 100%; font-size: 12px; min-height: 34px; padding: 6px 9px; }
 .editable td form { display: none; }
 .editable td { padding: 10px 12px; }
