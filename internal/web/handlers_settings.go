@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -8,6 +9,12 @@ import (
 	"durooma/internal/models"
 	"durooma/internal/store"
 )
+
+type categorizationCoverageView struct {
+	store.CategorizationCoverage
+	CanReset   bool
+	Background bool
+}
 
 func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, status int, settings models.AISettings, message string) {
 	w.Header().Set("Cache-Control", "no-store")
@@ -27,14 +34,13 @@ func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, status i
 	data["SettingsError"] = message
 	data["Saved"] = r.URL.Query().Get("saved") == "1"
 	data["KeyRemoved"] = r.URL.Query().Get("key_removed") == "1" && !settings.HasKey
-	if settings.Background && settings.HasKey {
-		coverage, err := s.store.CategorizationCoverage(r.Context())
-		if err != nil {
-			s.fail(w, err)
-			return
-		}
-		data["Coverage"] = coverage
+	data["CategorizationReset"] = r.URL.Query().Get("reset") == "1"
+	coverage, err := s.store.CategorizationCoverage(r.Context())
+	if err != nil {
+		s.fail(w, err)
+		return
 	}
+	data["Coverage"] = categorizationCoverageView{coverage, settings.HasKey, settings.Background && settings.HasKey}
 	w.WriteHeader(status)
 	s.templates.render(w, "settings", data)
 }
@@ -142,8 +148,17 @@ func (s *Server) handleCategorizationCoverage(w http.ResponseWriter, r *http.Req
 		s.fail(w, err)
 		return
 	}
-	if !settings.Background || !settings.HasKey {
-		s.templates.renderPartial(w, "settings", "categorization-coverage", nil)
+	coverage, err := s.store.CategorizationCoverage(r.Context())
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	s.templates.renderPartial(w, "settings", "categorization-coverage", categorizationCoverageView{coverage, settings.HasKey, settings.Background && settings.HasKey})
+}
+
+func (s *Server) handleConfirmCategorizationReset(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	if !s.requireCategorizationKey(w, r) {
 		return
 	}
 	coverage, err := s.store.CategorizationCoverage(r.Context())
@@ -151,5 +166,32 @@ func (s *Server) handleCategorizationCoverage(w http.ResponseWriter, r *http.Req
 		s.fail(w, err)
 		return
 	}
-	s.templates.renderPartial(w, "settings", "categorization-coverage", coverage)
+	data := s.base(r.Context(), "Reset categorization", "settings")
+	data["Coverage"] = coverage
+	s.templates.render(w, "categorization_reset", data)
+}
+
+func (s *Server) handleResetCategorization(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	if !s.requireCategorizationKey(w, r) {
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := r.ParseForm(); err != nil || r.PostForm.Get("confirm_reset") != "on" {
+		http.Error(w, "Confirm the reset before clearing categories.", http.StatusBadRequest)
+		return
+	}
+	if s.ai == nil || s.background == nil {
+		http.Error(w, "Categorization is unavailable; no categories were cleared.", http.StatusServiceUnavailable)
+		return
+	}
+	s.catJob.abort()
+	if err := s.ai.Reset(r.Context(), func(ctx context.Context) error {
+		return s.store.ResetCategorization(ctx, store.LocalUserID)
+	}); err != nil {
+		http.Error(w, "Could not reset categorization. Try again.", http.StatusInternalServerError)
+		return
+	}
+	s.background.Notify()
+	http.Redirect(w, r, "/settings?reset=1", http.StatusSeeOther)
 }

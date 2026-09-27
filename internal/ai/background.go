@@ -27,16 +27,17 @@ func RunBackground(ctx context.Context, st backgroundStore, svc *Service, poll t
 		txns, err := st.DueCategorization(ctx, options.BatchSize*options.Concurrency)
 		if err == nil && len(txns) > 0 {
 			var rep Report
-			rep, err = svc.Categorize(ctx, txns)
-			if ctx.Err() != nil {
-				return
-			}
 			ids := make([]int64, len(txns))
 			for i, t := range txns {
 				ids[i] = t.ID
 			}
-			if deferErr := st.DeferCategorization(ctx, ids); deferErr != nil {
-				log.Printf("background categorization: persist retry: %v", deferErr)
+			rep, err = svc.categorizeWithProgress(ctx, txns, nil, func(runCtx context.Context) {
+				if deferErr := st.DeferCategorization(runCtx, ids); deferErr != nil {
+					log.Printf("background categorization: persist retry: %v", deferErr)
+				}
+			})
+			if ctx.Err() != nil {
+				return
 			}
 			log.Printf("background categorization: %d by rules, %d by AI, %d unresolved", rep.ByRules, rep.ByAI, rep.Unresolved)
 		}

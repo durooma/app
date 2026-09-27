@@ -69,6 +69,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /settings/categorization-coverage", s.handleCategorizationCoverage)
 	mux.HandleFunc("POST /settings", s.handleSaveSettings)
 	mux.HandleFunc("POST /settings/api-key/remove", s.handleRemoveAPIKey)
+	mux.HandleFunc("GET /settings/categorization/reset", s.handleConfirmCategorizationReset)
+	mux.HandleFunc("POST /settings/categorization/reset", s.handleResetCategorization)
 
 	// Categories
 	mux.HandleFunc("GET /categories", s.handleCategories)

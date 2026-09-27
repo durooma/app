@@ -22,10 +22,12 @@ func TestCoverageEmptyPartialAndComplete(t *testing.T) {
 			"<strong>90</strong> of <strong>120</strong>", "75.0%", `value="90" max="120"`, "30 still uncategorized"}},
 		{"complete", store.CategorizationCoverage{Total: 120, Categorized: 120}, []string{
 			"100.0%", "All transactions have a category assigned."}},
+		{"changed", store.CategorizationCoverage{Total: 120, Categorized: 120, CategoriesChanged: true}, []string{
+			"Categories have changed", "recommend resetting"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var html strings.Builder
-			if err := templates.pages["settings"].ExecuteTemplate(&html, "categorization-coverage", tc.coverage); err != nil {
+			if err := templates.pages["settings"].ExecuteTemplate(&html, "categorization-coverage", categorizationCoverageView{CategorizationCoverage: tc.coverage}); err != nil {
 				t.Fatal(err)
 			}
 			for _, want := range tc.want {

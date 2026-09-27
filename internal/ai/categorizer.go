@@ -48,6 +48,8 @@ type Service struct {
 	configuration func(context.Context) (RunConfig, error)
 	cancelMu      sync.Mutex
 	activeCancel  context.CancelFunc
+	resetting     bool
+	generation    uint64
 }
 
 func NewService(store storeIface, provider Provider) *Service {
@@ -90,6 +92,30 @@ func (s *Service) CancelActive() {
 	}
 }
 
+// Reset stops active work, rejects queued work from the previous generation,
+// and holds the run gate until the caller's atomic database reset is complete.
+func (s *Service) Reset(ctx context.Context, reset func(context.Context) error) error {
+	s.cancelMu.Lock()
+	if s.resetting {
+		s.cancelMu.Unlock()
+		return errors.New("categorization reset already in progress")
+	}
+	s.resetting = true
+	s.generation++
+	if s.activeCancel != nil {
+		s.activeCancel()
+	}
+	s.cancelMu.Unlock()
+	defer func() { s.cancelMu.Lock(); s.resetting = false; s.cancelMu.Unlock() }()
+	select {
+	case s.gate <- struct{}{}:
+		defer func() { <-s.gate }()
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	return reset(ctx)
+}
+
 // Report summarises a categorization run.
 type Report struct {
 	Total      int
@@ -128,7 +154,18 @@ func (s *Service) Categorize(ctx context.Context, txns []models.Transaction) (Re
 // already committed are kept, so aborting is safe rather than destructive.
 // onProgress may be nil, and is called from the calling goroutine.
 func (s *Service) CategorizeWithProgress(ctx context.Context, txns []models.Transaction, onProgress func(Progress)) (Report, error) {
+	return s.categorizeWithProgress(ctx, txns, onProgress, nil)
+}
+
+func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Transaction, onProgress func(Progress), finish func(context.Context)) (Report, error) {
 	rep := Report{Provider: s.provider.Name()}
+	s.cancelMu.Lock()
+	generation := s.generation
+	resetting := s.resetting
+	s.cancelMu.Unlock()
+	if resetting {
+		return rep, context.Canceled
+	}
 	select {
 	case s.gate <- struct{}{}:
 		defer func() { <-s.gate }()
@@ -137,9 +174,23 @@ func (s *Service) CategorizeWithProgress(ctx context.Context, txns []models.Tran
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancelMu.Lock()
+	if s.resetting || generation != s.generation {
+		s.cancelMu.Unlock()
+		cancel()
+		return rep, context.Canceled
+	}
 	s.activeCancel = cancel
 	s.cancelMu.Unlock()
 	defer func() { cancel(); s.cancelMu.Lock(); s.activeCancel = nil; s.cancelMu.Unlock() }()
+	// Retry bookkeeping must finish under the same gate as label writes, so a
+	// completed old batch cannot restore retry delays after a reset.
+	if finish != nil {
+		defer func() {
+			if ctx.Err() == nil {
+				finish(ctx)
+			}
+		}()
+	}
 	options, err := s.runConfig(ctx)
 	if err != nil {
 		return rep, err
@@ -174,6 +225,14 @@ func (s *Service) CategorizeWithProgress(ctx context.Context, txns []models.Tran
 	txns = pending
 	rep.Total = len(txns)
 	progress() // publish the denominator before the first slow call
+	if len(txns) == 0 {
+		return rep, nil
+	}
+	if tracker, ok := s.store.(interface{ BeginCategorization(context.Context) error }); ok {
+		if err := tracker.BeginCategorization(ctx); err != nil {
+			return rep, err
+		}
+	}
 
 	cats, err := s.store.ListCategories(ctx)
 	if err != nil {

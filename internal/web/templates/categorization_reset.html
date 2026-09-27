@@ -1,0 +1,13 @@
+{{define "content"}}
+<div class="page-head"><div><p class="eyebrow">Settings</p><h1>Reset categorization?</h1></div></div>
+<section class="form-panel settings-panel">
+    <p>This will clear <strong>{{.Coverage.Categorized}} category assignment{{if ne .Coverage.Categorized 1}}s{{end}}</strong>, including manual assignments, and recategorize <strong>{{.Coverage.Total}} transaction{{if ne .Coverage.Total 1}}s{{end}}</strong> from scratch.</p>
+    <p>Your transactions, category definitions, and rules are kept. Rules will run first, followed by your saved OpenRouter model. Background categorization will be enabled and API usage will be billed to your key.</p>
+    <div class="alert error">Cleared assignments cannot be undone. Any active categorization run will be stopped before the reset.</div>
+    <form method="post" action="/settings/categorization/reset" class="stack reset-confirmation">
+        <label class="chk"><input type="checkbox" name="confirm_reset" value="on" required> I understand that all category assignments, including manual ones, will be cleared.</label>
+        <button type="submit" class="reset-button">Clear assignments and restart categorization</button>
+        <a href="/settings">Cancel and keep assignments</a>
+    </form>
+</section>
+{{end}}

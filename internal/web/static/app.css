@@ -136,6 +136,9 @@ button .icon, .button .icon { width: 16px; height: 16px; }
 .stack label[hidden] { display: none; }
 .stack p { font-size: 12px; margin: 0; line-height: 1.7; }
 .stack > button { align-self: flex-start; }
+.reset-confirmation label.chk { flex-direction: row; align-items: flex-start; }
+.reset-confirmation input[type="checkbox"] { flex: 0 0 auto; min-height: auto; margin-top: 3px; }
+.reset-button { background: var(--panel); color: var(--neg); border-color: var(--neg); white-space: normal; text-align: left; }
 .saved-keys { list-style: none; margin: 0; padding: 0; }
 .saved-key { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel-2); }
 .saved-key strong, .saved-key span.muted { display: block; font-size: 12px; }

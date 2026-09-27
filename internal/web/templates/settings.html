@@ -2,6 +2,7 @@
 <div class="page-head"><div><p class="eyebrow">Preferences</p><h1>Settings</h1><p class="page-description">Make Durooma work the way you do.</p></div></div>
 {{if .Saved}}<div class="alert ok" role="status">Settings saved.</div>{{end}}
 {{if .KeyRemoved}}<div class="alert ok" role="status">API key removed. Auto-categorization is off.</div>{{end}}
+{{if .CategorizationReset}}<div class="alert ok" role="status">Category assignments cleared. Background categorization is enabled and will restart on the next check.</div>{{end}}
 <section class="form-panel settings-panel">
     <h2>Categorization</h2>
     <p class="muted">Use your own OpenRouter account for manual and background categorization. Requests are billed to your account and use providers with zero data retention.</p>
@@ -69,7 +70,7 @@
         <button type="submit">Save settings</button>
     </form>
     {{if .Settings.HasKey}}<form id="remove-api-key-form" method="post" action="/settings/api-key/remove"></form>{{end}}
-    {{if .BackgroundEnabled}}{{template "categorization-coverage" .Coverage}}{{end}}
+    {{template "categorization-coverage" .Coverage}}
 </section>
 <script src="/static/settings.js" defer></script>
 {{end}}
@@ -80,6 +81,7 @@
 <section id="categorization-coverage" class="coverage" aria-labelledby="coverage-title"
     hx-get="/settings/categorization-coverage" hx-trigger="every 5s" hx-swap="outerHTML">
     <h2 id="coverage-title">Categorization coverage</h2>
+    {{if .CategoriesChanged}}<div class="alert" role="status"><strong>Categories have changed.</strong> Existing assignments may use earlier category definitions. We recommend resetting and categorizing again to apply your changes to all transactions.</div>{{end}}
     <div role="status" aria-live="polite" aria-atomic="true">
         {{if .Total}}
         <div class="coverage-summary">
@@ -97,6 +99,12 @@
         {{end}}
     </div>
     <p class="muted">Includes categories assigned manually, by rules, and by AI. Updates automatically every 5 seconds.</p>
+    {{if .Total}}
+    {{if .CanReset}}
+    <p class="muted">{{if .Background}}Background categorization is on.{{else}}Background categorization is off. Resetting will turn it on.{{end}}</p>
+    <a class="button secondary" href="/settings/categorization/reset">Reset and recategorize…</a>
+    {{else}}<p class="muted">Save an OpenRouter API key above to reset and recategorize.</p>{{end}}
+    {{end}}
 </section>
 {{else}}
 <div id="categorization-coverage" hidden></div>

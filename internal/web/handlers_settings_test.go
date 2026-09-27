@@ -9,7 +9,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"durooma/internal/ai"
 	"durooma/internal/config"
 	"durooma/internal/db"
 	"durooma/internal/models"
@@ -102,6 +104,29 @@ func TestSettingsCredentialsAndCategorizationGates(t *testing.T) {
 	if w := post(f, ""); w.Code != 303 {
 		t.Fatal("settings update failed")
 	}
+	// Reset has a dedicated confirmation page and must reject unconfirmed POSTs.
+	if w := get("/settings/categorization/reset"); w.Code != 200 || !strings.Contains(w.Body.String(), "including manual assignments") {
+		t.Fatal("missing reset confirmation")
+	}
+	wReset := httptest.NewRecorder()
+	handler.ServeHTTP(wReset, httptest.NewRequest("POST", "/settings/categorization/reset", nil))
+	if wReset.Code != 400 {
+		t.Fatal("unconfirmed reset accepted")
+	}
+	// The worker isn't started in this test; no provider calls are made.
+	srv.ai = ai.NewService(st, ai.Noop{})
+	srv.background = ai.NewBackgroundControl(func(context.Context) (bool, error) { return false, nil }, func(context.Context) {}, time.Second)
+	wReset = httptest.NewRecorder()
+	rReset := httptest.NewRequest("POST", "/settings/categorization/reset", strings.NewReader("confirm_reset=on"))
+	rReset.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	handler.ServeHTTP(wReset, rReset)
+	if wReset.Code != 303 || wReset.Header().Get("Location") != "/settings?reset=1" {
+		t.Fatal("confirmed reset failed", wReset.Code)
+	}
+	resetSettings, err := st.AISettings(ctx, store.LocalUserID)
+	if err != nil || !resetSettings.Background || resetSettings.Model != "z-ai/glm-5.3-flash" {
+		t.Fatal("reset did not enable background processing")
+	}
 	key, err := st.OpenRouterKey(ctx, store.LocalUserID)
 	if err != nil || key != "sk-or-test-private-key-0001" {
 		t.Fatal("blank key failed to preserve credential")
@@ -128,6 +153,11 @@ func TestSettingsCredentialsAndCategorizationGates(t *testing.T) {
 	if settings.HasKey || settings.Background || key != "" {
 		t.Fatal("removal failed to disable categorization")
 	}
+	wReset = httptest.NewRecorder()
+	handler.ServeHTTP(wReset, httptest.NewRequest("POST", "/settings/categorization/reset", nil))
+	if wReset.Code != 403 {
+		t.Fatal("reset allowed without key")
+	}
 	if settings.Model != "z-ai/glm-5.3-flash" || settings.IntervalMS != 500 || settings.Concurrency != 2 {
 		t.Fatal("key removal changed unrelated saved preferences")
 	}
@@ -135,14 +165,14 @@ func TestSettingsCredentialsAndCategorizationGates(t *testing.T) {
 	if !strings.Contains(page.Body.String(), `id="api-key"`) || strings.Contains(page.Body.String(), `form="remove-api-key-form"`) || !strings.Contains(page.Body.String(), "API key removed") {
 		t.Fatal("key removal did not restore the edit box")
 	}
-	if w := get("/settings/categorization-coverage"); strings.Contains(w.Body.String(), `hx-trigger="every 5s"`) {
-		t.Fatal("disabled coverage still polling")
+	if w := get("/settings/categorization-coverage"); strings.Contains(w.Body.String(), `href="/settings/categorization/reset"`) {
+		t.Fatal("reset offered without a key")
 	}
 }
 
 func TestCrossOriginProtectionRunsBeforeHandlers(t *testing.T) {
 	s := &Server{}
-	for _, path := range []string{"/settings", "/settings/api-key/remove", "/transactions/categorize", "/transactions/1/categorize"} {
+	for _, path := range []string{"/settings", "/settings/api-key/remove", "/settings/categorization/reset", "/transactions/categorize", "/transactions/1/categorize"} {
 		r := httptest.NewRequest(http.MethodPost, "http://example.com"+path, nil)
 		r.Header.Set("Sec-Fetch-Site", "cross-site")
 		w := httptest.NewRecorder()

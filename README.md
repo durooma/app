@@ -132,7 +132,20 @@ Run one app instance per database.
 
 Background processing is off by default and can only be enabled with a saved
 key. It discovers existing uncategorized transactions and new imports, polling
-every 30 seconds. The Settings coverage indicator updates every five seconds.
+every 30 seconds. The Settings coverage indicator updates every five seconds,
+including while background processing is off. **Reset and recategorize** opens
+a confirmation page: it clears all transaction category assignments (including
+manual ones), clears transaction retry delays, and enables background processing
+to start again with the saved key and model. Transactions, category definitions,
+and rules remain. Active requests are stopped before clearing assignments;
+the reset cannot be undone and fresh provider requests incur normal charges.
+
+Settings recommends a reset when categories have been added, changed, or deleted
+since the categorization baseline. The warning persists across incremental runs
+because existing assignments are not revisited. A reset establishes a fresh
+baseline on the next run. Change tracking begins when this feature is installed;
+it cannot detect category edits made before the migration.
+
 Transient HTTP 408/429/5xx and network failures retry up to five attempts with a
 shared exponential cooldown (2–30 seconds, or longer for `Retry-After`). Each
 attempt has a 120-second timeout. Invalid model outputs are not retried; they
