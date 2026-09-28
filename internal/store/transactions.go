@@ -16,6 +16,7 @@ type TxnFilter struct {
 	InstitutionID int64
 	CategoryID    int64
 	Uncategorized bool
+	IncludedOnly  bool // report drill-downs omit categories excluded from calculations
 	From          time.Time
 	To            time.Time
 	// PeriodStart/PeriodEnd select transactions whose amortization window overlaps
@@ -44,7 +45,7 @@ const txnSelect = `
 	SELECT t.id, t.account_id, a.name, i.name, t.txn_date, t.description,
 	       t.amount, t.currency, t.base_amount, t.base_currency,
 	       t.category_id, COALESCE(c.name, ''), t.start_month, t.end_month,
-	       t.external_hash, t.source, t.note` + txnFrom
+	       t.external_hash, t.source, t.note, COALESCE(c.exclude_from_calculations, false)` + txnFrom
 
 func scanTxn(rows interface {
 	Scan(...any) error
@@ -53,7 +54,7 @@ func scanTxn(rows interface {
 	err := rows.Scan(&t.ID, &t.AccountID, &t.AccountName, &t.Institution, &t.Date,
 		&t.Description, &t.Amount, &t.Currency, &t.BaseAmount, &t.BaseCurrency,
 		&t.CategoryID, &t.CategoryName, &t.StartMonth, &t.EndMonth,
-		&t.ExternalHash, &t.Source, &t.Note)
+		&t.ExternalHash, &t.Source, &t.Note, &t.ExcludeFromCalculations)
 	return t, err
 }
 
@@ -75,6 +76,9 @@ func txnWhere(f TxnFilter) (where []string, args []any) {
 	}
 	if f.Uncategorized {
 		where = append(where, "t.category_id IS NULL")
+	}
+	if f.IncludedOnly {
+		where = append(where, includedCategorySQL)
 	}
 	if !f.From.IsZero() {
 		add("t.txn_date >= $%d", f.From)

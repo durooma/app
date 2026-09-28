@@ -6,10 +6,12 @@ import (
 	"durooma/internal/models"
 )
 
+const includedCategorySQL = `COALESCE(c.exclude_from_calculations, false) = false`
+
 // allocCTE expands every transaction into one row per month in its amortization
 // window, dividing base_amount evenly across those months. This is what makes a
 // transaction assigned to a quarter or a whole year contribute a fair share to
-// each month in all reports below.
+// each month in all reports below. Excluded categories never enter the allocation.
 const allocCTE = `
 WITH alloc AS (
 	SELECT
@@ -24,6 +26,7 @@ WITH alloc AS (
 	FROM transactions t
 	LEFT JOIN categories c ON c.id = t.category_id
 	CROSS JOIN LATERAL generate_series(t.start_month, t.end_month, interval '1 month') AS gs(m)
+	WHERE ` + includedCategorySQL + `
 )`
 
 // scopeWhere restricts alloc rows to the given period. All time needs no

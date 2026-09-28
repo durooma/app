@@ -8,7 +8,7 @@ import (
 
 func (s *Store) ListCategories(ctx context.Context) ([]models.Category, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, name, description, COALESCE(kind, ''), sort_order
+		SELECT id, name, description, COALESCE(kind, ''), sort_order, exclude_from_calculations
 		FROM categories
 		ORDER BY sort_order, name`)
 	if err != nil {
@@ -19,7 +19,7 @@ func (s *Store) ListCategories(ctx context.Context) ([]models.Category, error) {
 	var out []models.Category
 	for rows.Next() {
 		var c models.Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.Description, &c.Kind, &c.SortOrder); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Description, &c.Kind, &c.SortOrder, &c.ExcludeFromCalculations); err != nil {
 			return nil, err
 		}
 		out = append(out, c)
@@ -30,26 +30,26 @@ func (s *Store) ListCategories(ctx context.Context) ([]models.Category, error) {
 func (s *Store) GetCategory(ctx context.Context, id int64) (models.Category, error) {
 	var c models.Category
 	err := s.pool.QueryRow(ctx, `
-		SELECT id, name, description, COALESCE(kind, ''), sort_order
+		SELECT id, name, description, COALESCE(kind, ''), sort_order, exclude_from_calculations
 		FROM categories WHERE id = $1`, id).
-		Scan(&c.ID, &c.Name, &c.Description, &c.Kind, &c.SortOrder)
+		Scan(&c.ID, &c.Name, &c.Description, &c.Kind, &c.SortOrder, &c.ExcludeFromCalculations)
 	return c, err
 }
 
 func (s *Store) CreateCategory(ctx context.Context, c models.Category) (int64, error) {
 	var id int64
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO categories (name, description, kind, sort_order)
-		VALUES ($1, $2, $3, $4) RETURNING id`,
-		c.Name, c.Description, kindOrNil(c.Kind), c.SortOrder).Scan(&id)
+		INSERT INTO categories (name, description, kind, sort_order, exclude_from_calculations)
+		VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		c.Name, c.Description, kindOrNil(c.Kind), c.SortOrder, c.ExcludeFromCalculations).Scan(&id)
 	return id, err
 }
 
 func (s *Store) UpdateCategory(ctx context.Context, c models.Category) error {
 	_, err := s.pool.Exec(ctx, `
-		UPDATE categories SET name = $2, description = $3, kind = $4, sort_order = $5
+		UPDATE categories SET name = $2, description = $3, kind = $4, sort_order = $5, exclude_from_calculations = $6
 		WHERE id = $1`,
-		c.ID, c.Name, c.Description, kindOrNil(c.Kind), c.SortOrder)
+		c.ID, c.Name, c.Description, kindOrNil(c.Kind), c.SortOrder, c.ExcludeFromCalculations)
 	return err
 }
 

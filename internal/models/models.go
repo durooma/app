@@ -22,11 +22,12 @@ type Account struct {
 }
 
 type Category struct {
-	ID          int64
-	Name        string
-	Description string
-	Kind        string // "income", "expense", or ""
-	SortOrder   int
+	ID                      int64
+	Name                    string
+	Description             string
+	Kind                    string // "income", "expense", or ""
+	SortOrder               int
+	ExcludeFromCalculations bool
 }
 
 type Rule struct {
@@ -38,23 +39,24 @@ type Rule struct {
 }
 
 type Transaction struct {
-	ID           int64
-	AccountID    int64
-	AccountName  string // joined
-	Institution  string // joined
-	Date         time.Time
-	Description  string
-	Amount       float64
-	Currency     string
-	BaseAmount   float64
-	BaseCurrency string
-	CategoryID   *int64
-	CategoryName string // joined ("" if uncategorized)
-	StartMonth   time.Time
-	EndMonth     time.Time
-	ExternalHash string
-	Source       string
-	Note         string
+	ID                      int64
+	AccountID               int64
+	AccountName             string // joined
+	Institution             string // joined
+	Date                    time.Time
+	Description             string
+	Amount                  float64
+	Currency                string
+	BaseAmount              float64
+	BaseCurrency            string
+	CategoryID              *int64
+	CategoryName            string // joined ("" if uncategorized)
+	ExcludeFromCalculations bool   // joined from the category
+	StartMonth              time.Time
+	EndMonth                time.Time
+	ExternalHash            string
+	Source                  string
+	Note                    string
 }
 
 // MonthSpan returns the number of inclusive months the transaction is amortized

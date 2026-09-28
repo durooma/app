@@ -150,6 +150,8 @@ button .icon, .button .icon { width: 16px; height: 16px; }
 .editable td { padding: 10px 12px; }
 .editable input { background: transparent; border-color: transparent; }
 .editable input:hover, .editable input:focus { border-color: var(--border); background: var(--panel-2); }
+.editable .chk, .row-form .chk { display: flex; align-items: center; gap: 6px; }
+.editable input[type="checkbox"], .row-form input[type="checkbox"] { width: auto; min-height: auto; flex: 0 0 auto; }
 .editable td:first-child { min-width: 160px; }
 .editable td:nth-child(3) { min-width: 115px; }
 .editable button { min-height: 32px; padding: 5px 10px; background: var(--accent-soft); color: var(--accent); }

@@ -22,10 +22,11 @@ func (s *Server) handleCategories(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	c := models.Category{
-		Name:        r.FormValue("name"),
-		Description: r.FormValue("description"),
-		Kind:        r.FormValue("kind"),
-		SortOrder:   intParam(r, "sort_order", 0),
+		Name:                    r.FormValue("name"),
+		Description:             r.FormValue("description"),
+		Kind:                    r.FormValue("kind"),
+		SortOrder:               intParam(r, "sort_order", 0),
+		ExcludeFromCalculations: r.FormValue("exclude_from_calculations") == "1",
 	}
 	if c.Name == "" {
 		http.Error(w, "name is required", http.StatusBadRequest)
@@ -45,11 +46,12 @@ func (s *Server) handleUpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := models.Category{
-		ID:          id,
-		Name:        r.FormValue("name"),
-		Description: r.FormValue("description"),
-		Kind:        r.FormValue("kind"),
-		SortOrder:   intParam(r, "sort_order", 0),
+		ID:                      id,
+		Name:                    r.FormValue("name"),
+		Description:             r.FormValue("description"),
+		Kind:                    r.FormValue("kind"),
+		SortOrder:               intParam(r, "sort_order", 0),
+		ExcludeFromCalculations: r.FormValue("exclude_from_calculations") == "1",
 	}
 	if err := s.store.UpdateCategory(r.Context(), c); err != nil {
 		s.fail(w, err)

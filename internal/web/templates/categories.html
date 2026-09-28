@@ -1,11 +1,11 @@
 {{define "content"}}
 <div class="page-head"><div><p class="eyebrow">Organization</p><h1>Categories</h1><p class="page-description">Bring structure to your spending and income.</p></div></div>
 <p class="muted">Edit names, descriptions and type. Descriptions are also used as
-context for the AI categorizer.</p>
+context for the AI categorizer. Excluded categories stay visible in Transactions but do not count toward income, expenses or balances.</p>
 
 <div class="table-scroll">
 <table class="editable">
-	<thead><tr><th>Name</th><th>Description</th><th>Type</th><th class="num">Sort</th><th><span class="sr-only">Actions</span></th></tr></thead>
+	<thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Calculations</th><th class="num">Sort</th><th><span class="sr-only">Actions</span></th></tr></thead>
 	<tbody>
 		{{range .Categories}}
 		<tr>
@@ -21,6 +21,7 @@ context for the AI categorizer.</p>
 					<option value="expense" {{if eq .Kind "expense"}}selected{{end}}>Expense</option>
 				</select>
 			</td>
+			<td><label class="chk"><input form="cat-{{.ID}}" type="checkbox" name="exclude_from_calculations" value="1" {{if .ExcludeFromCalculations}}checked{{end}}> Exclude from calculations</label></td>
 			<td class="num"><input form="cat-{{.ID}}" aria-label="Sort order" name="sort_order" type="number" value="{{.SortOrder}}" class="tiny"></td>
 			<td class="nowrap">
 				<button form="cat-{{.ID}}" type="submit">Save</button>
@@ -43,6 +44,7 @@ context for the AI categorizer.</p>
 		<option value="expense">Expense</option>
 	</select></label>
 	<label>Order<input name="sort_order" type="number" placeholder="Sort" class="tiny" value="500"></label>
+	<label class="chk"><input type="checkbox" name="exclude_from_calculations" value="1"> Exclude from calculations</label>
 	<button type="submit">Add category</button>
 </form>
 </section>

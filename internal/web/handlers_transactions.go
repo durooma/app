@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"durooma/internal/models"
@@ -19,6 +20,7 @@ func txnFilterFromRequest(r *http.Request) store.TxnFilter {
 		InstitutionID: int64(intParam(r, "institution_id", 0)),
 		CategoryID:    int64(intParam(r, "category_id", 0)),
 		Uncategorized: r.FormValue("uncategorized") == "1",
+		IncludedOnly:  r.FormValue("included_only") == "1",
 		Search:        r.FormValue("q"),
 		Limit:         pageSize,
 		Offset:        (intParam(r, "page", 1) - 1) * pageSize,
@@ -73,7 +75,12 @@ func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[strin
 	categories, _ := s.store.ListCategories(ctx)
 
 	var total float64
+	var excluded int
 	for _, t := range txns {
+		if t.ExcludeFromCalculations {
+			excluded++
+			continue
+		}
 		total += t.BaseAmount
 	}
 
@@ -83,13 +90,22 @@ func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[strin
 	data["Institutions"] = institutions
 	data["Categories"] = categories
 	data["Total"] = total
+	data["ExcludedCount"] = excluded
 	data["Page"] = intParam(r, "page", 1)
 	data["HasMore"] = len(txns) == pageSize
+	pageURL := func(page int) string {
+		query := r.URL.Query()
+		query.Set("page", strconv.Itoa(page))
+		return "/transactions?" + query.Encode()
+	}
+	data["PreviousPageURL"] = pageURL(intParam(r, "page", 1) - 1)
+	data["NextPageURL"] = pageURL(intParam(r, "page", 1) + 1)
 	data["Filter"] = map[string]any{
 		"account_id":     f.AccountID,
 		"institution_id": f.InstitutionID,
 		"category_id":    f.CategoryID,
 		"uncategorized":  f.Uncategorized,
+		"included_only":  f.IncludedOnly,
 		"q":              f.Search,
 		"from":           r.FormValue("from"),
 		"to":             r.FormValue("to"),
@@ -106,7 +122,9 @@ func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[strin
 		for _, t := range txns {
 			share := t.AllocatedFor(f.PeriodStart, f.PeriodEnd)
 			alloc[t.ID] = share
-			allocTotal += share
+			if !t.ExcludeFromCalculations {
+				allocTotal += share
+			}
 		}
 		data["PeriodActive"] = true
 		data["Alloc"] = alloc
@@ -227,6 +245,8 @@ func (s *Server) handleSetCategory(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
+	// A category change can change inclusion, totals, and report drill-down rows.
+	w.Header().Set("HX-Refresh", "true")
 	w.WriteHeader(http.StatusNoContent)
 }
 

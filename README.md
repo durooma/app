@@ -11,7 +11,11 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
 
 ## Features
 
-- **Editable categories** with name, description and optional income/expense type.
+- **Editable categories** with name, description, optional income/expense type,
+  and an **Exclude from calculations** setting. Transfer is excluded by default.
+  Excluded transactions remain editable in Transactions but do not contribute to
+  income, expenses, balances, or report breakdowns. Report drill-downs show only
+  included transactions; transaction summaries also omit excluded categories.
 - **Unified transaction view** across every account/institution/currency, with
   filtering (institution, account, category, uncategorized, date range, search).
 - **One report view, drilled by scope** — `/reports` opens on all time, showing

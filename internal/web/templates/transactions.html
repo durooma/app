@@ -13,6 +13,7 @@
 		<input type="hidden" name="account_id" value="{{index $f "account_id"}}">
 		<input type="hidden" name="category_id" value="{{index $f "category_id"}}">
 		<input type="hidden" name="uncategorized" value="{{if index $f "uncategorized"}}1{{end}}">
+		<input type="hidden" name="included_only" value="{{if index $f "included_only"}}1{{end}}">
 		<input type="hidden" name="from" value="{{index $f "from"}}">
 		<input type="hidden" name="to" value="{{index $f "to"}}">
 		<input type="hidden" name="period" value="{{index $f "period"}}">
@@ -46,6 +47,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 		{{range .Categories}}<option value="{{.ID}}" {{if eq .ID (index $f "category_id")}}selected{{end}}>{{.Name}}</option>{{end}}
 	</select>
 	<label class="chk"><input type="checkbox" name="uncategorized" value="1" {{if index $f "uncategorized"}}checked{{end}}> Uncategorized</label>
+	<label class="chk"><input type="checkbox" name="included_only" value="1" {{if index $f "included_only"}}checked{{end}}> Included in calculations only</label>
 	<input aria-label="From date" type="date" name="from" value="{{index $f "from"}}">
 	<input aria-label="To date" type="date" name="to" value="{{index $f "to"}}">
 	{{/* period/sign come from report drill-downs; keep them across manual re-filtering */}}
@@ -68,6 +70,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 {{end}}
 
 <p class="results-summary"><strong>{{len .Transactions}}</strong> shown · net {{money .Total}} {{.BaseCurrency}}{{if .PeriodActive}} · <strong>{{money .AllocTotal}}</strong> allocated to this period{{end}}</p>
+{{if .ExcludedCount}}<p class="muted">{{.ExcludedCount}} shown transaction(s) excluded from calculations by category.</p>{{end}}
 
 <div class="table-scroll">
 <table class="txns">
@@ -92,8 +95,8 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 </div>
 
 <div class="pager">
-	{{if gt .Page 1}}<a href="?page={{add .Page -1}}">← Newer</a>{{end}}
-	{{if .HasMore}}<a href="?page={{add .Page 1}}">Older →</a>{{end}}
+	{{if gt .Page 1}}<a href="{{.PreviousPageURL}}">← Newer</a>{{end}}
+	{{if .HasMore}}<a href="{{.NextPageURL}}">Older →</a>{{end}}
 </div>
 {{end}}
 
@@ -110,6 +113,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 			<option value="0">—</option>
 			{{range .Cats}}<option value="{{.ID}}" {{if eq .ID $tx.CatID}}selected{{end}}>{{.Name}}</option>{{end}}
 		</select>
+		{{if $tx.ExcludeFromCalculations}}<small class="muted">Excluded from calculations</small>{{end}}
 		{{if and .AIEnabled (not $tx.CategoryID)}}
 		<button class="auto-cat" title="Auto-categorize this transaction"
 			hx-post="/transactions/{{$tx.ID}}/categorize"

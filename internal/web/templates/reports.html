@@ -16,9 +16,9 @@
 
 {{with .Totals}}
 <div class="cards">
-	<div class="card pos"><div class="card-label"><span>Total income</span><span class="metric-icon" aria-hidden="true">↙</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=income">{{money .Income}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money received</span><span aria-hidden="true">↗</span></div></div>
-	<div class="card neg"><div class="card-label"><span>Total expenses</span><span class="metric-icon" aria-hidden="true">↗</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=expense">{{money .Expense}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money spent</span><span aria-hidden="true">↗</span></div></div>
-	<div class="card balance"><div class="card-label"><span>Net balance</span><span class="metric-icon" aria-hidden="true">=</span></div><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{$p.Param}}">{{money .Net}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Income less expenses</span><span aria-hidden="true">↗</span></div></div>
+	<div class="card pos"><div class="card-label"><span>Total income</span><span class="metric-icon" aria-hidden="true">↙</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=income&included_only=1">{{money .Income}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money received</span><span aria-hidden="true">↗</span></div></div>
+	<div class="card neg"><div class="card-label"><span>Total expenses</span><span class="metric-icon" aria-hidden="true">↗</span></div><strong><a class="drill" href="/transactions?period={{$p.Param}}&sign=expense&included_only=1">{{money .Expense}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Money spent</span><span aria-hidden="true">↗</span></div></div>
+	<div class="card balance"><div class="card-label"><span>Net balance</span><span class="metric-icon" aria-hidden="true">=</span></div><strong class="{{signclass .Net}}"><a class="drill" href="/transactions?period={{$p.Param}}&included_only=1">{{money .Net}}</a></strong><div class="card-caption"><span>{{$.BaseCurrency}} · Income less expenses</span><span aria-hidden="true">↗</span></div></div>
 </div>
 {{end}}
 
@@ -47,9 +47,9 @@
 			{{range $subs}}
 			<tr>
 				<td class="nowrap"><a class="deeper" href="{{reporturl .Period}}">{{.Period.ShortLabel}} <span class="chev">›</span></a></td>
-				<td class="num pos">{{if .Income}}<a class="drill" href="/transactions?period={{.Period.Param}}&sign=income">{{money .Income}}</a>{{end}}</td>
-				<td class="num neg">{{if .Expense}}<a class="drill" href="/transactions?period={{.Period.Param}}&sign=expense">{{money .Expense}}</a>{{end}}</td>
-				<td class="num {{signclass .Net}}">{{if .Net}}<a class="drill" href="/transactions?period={{.Period.Param}}">{{money .Net}}</a>{{end}}</td>
+				<td class="num pos">{{if .Income}}<a class="drill" href="/transactions?period={{.Period.Param}}&sign=income&included_only=1">{{money .Income}}</a>{{end}}</td>
+				<td class="num neg">{{if .Expense}}<a class="drill" href="/transactions?period={{.Period.Param}}&sign=expense&included_only=1">{{money .Expense}}</a>{{end}}</td>
+				<td class="num {{signclass .Net}}">{{if .Net}}<a class="drill" href="/transactions?period={{.Period.Param}}&included_only=1">{{money .Net}}</a>{{end}}</td>
 			</tr>
 			{{end}}
 		</tbody>
@@ -62,7 +62,7 @@
 	<h2>Transactions</h2>
 	<p class="muted">
 		{{if .TxnsTruncated}}First {{len .Transactions}}{{else}}{{len .Transactions}}{{end}} transaction(s) allocated to {{$p.Label}} ·
-		<a href="/transactions?period={{$p.Param}}">edit them in the transactions view</a>
+		<a href="/transactions?period={{$p.Param}}&included_only=1">edit them in the transactions view</a>
 	</p>
 	<div class="table-scroll">
 	<table>
@@ -109,11 +109,11 @@
 		{{range .Rows}}
 		{{$cat := .}}
 		<tr>
-			<td class="sticky-col"><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p.Param}}&sign={{$sign}}">{{.Category}}</a></td>
+			<td class="sticky-col"><a href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p.Param}}&sign={{$sign}}&included_only=1">{{.Category}}</a></td>
 			{{range .Cells}}
-			<td class="num {{signclass .Amount}}">{{if .Amount}}<a class="drill" href="/transactions?{{if $cat.CategoryID}}category_id={{$cat.CategoryID}}{{else}}uncategorized=1{{end}}&period={{.Period.Param}}&sign={{$sign}}">{{money .Amount}}</a>{{end}}</td>
+			<td class="num {{signclass .Amount}}">{{if .Amount}}<a class="drill" href="/transactions?{{if $cat.CategoryID}}category_id={{$cat.CategoryID}}{{else}}uncategorized=1{{end}}&period={{.Period.Param}}&sign={{$sign}}&included_only=1">{{money .Amount}}</a>{{end}}</td>
 			{{end}}
-			<td class="num total-col {{signclass .Total}}"><a class="drill" href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p.Param}}&sign={{$sign}}">{{money .Total}}</a></td>
+			<td class="num total-col {{signclass .Total}}"><a class="drill" href="/transactions?{{if .CategoryID}}category_id={{.CategoryID}}{{else}}uncategorized=1{{end}}&period={{$p.Param}}&sign={{$sign}}&included_only=1">{{money .Total}}</a></td>
 		</tr>
 		{{end}}
 		{{if not .Rows}}<tr><td class="muted" colspan="99">{{.Empty}}</td></tr>{{end}}

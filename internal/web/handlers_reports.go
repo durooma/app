@@ -119,7 +119,7 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	if p.IsMonth() {
 		start, end := p.Bounds()
 		txns, err := s.store.ListTransactions(ctx, store.TxnFilter{
-			PeriodStart: start, PeriodEnd: end, Limit: txnLimit,
+			PeriodStart: start, PeriodEnd: end, Limit: txnLimit, IncludedOnly: true,
 		})
 		if err != nil {
 			s.fail(w, err)
