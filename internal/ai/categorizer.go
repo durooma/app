@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strings"
 	"sync"
+	"time"
 
 	"durooma/internal/models"
 )
@@ -116,18 +117,26 @@ func (s *Service) Reset(ctx context.Context, reset func(context.Context) error) 
 	return reset(ctx)
 }
 
-// Report summarises a categorization run.
+// Report summarises a categorization run. Total and the counts after it are
+// about categories; the Period counts are about the transactions whose
+// reporting period was still undecided.
 type Report struct {
 	Total      int
 	ByRules    int
 	ByAI       int
 	Unresolved int
 	Provider   string
+
+	Periods           int // transactions whose period was undecided
+	PeriodsAssigned   int // decided by the provider, including "its own month"
+	PeriodsMoved      int // of those, moved away from the transaction's own month
+	PeriodsUnresolved int
 }
 
 // Progress is emitted as a run advances so callers can show a progress bar.
-// Done counts transactions already resolved one way or another (categorized,
-// or given up on); it reaches Total on a run that is allowed to finish.
+// Done counts decisions already resolved one way or another (a category or a
+// period assigned, or given up on); it reaches Total on a run that is allowed
+// to finish.
 type Progress struct {
 	Done  int
 	Total int
@@ -140,9 +149,10 @@ func (s *Service) ProviderName() string { return s.provider.Name() }
 const itemsPerPrompt = 15
 
 // Categorize applies rules first, then the AI provider, to the supplied
-// transactions, writing results back. Transactions that already have a category
-// are skipped so existing (possibly hand-picked) categorizations are never
-// overwritten. Every transaction handed in is processed: bounding the size of a
+// transactions, writing results back. When the provider supports it, it then
+// suggests the month, quarter or year each transaction counts towards.
+// Categories and periods that are already set are skipped so existing
+// (possibly hand-picked) choices are never overwritten. Every transaction handed in is processed: bounding the size of a
 // run is the caller's job, since only the caller knows how it selected them.
 func (s *Service) Categorize(ctx context.Context, txns []models.Transaction) (Report, error) {
 	return s.CategorizeWithProgress(ctx, txns, nil)
@@ -200,7 +210,7 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 	}
 	ids := make([]int64, 0, len(txns))
 	for _, t := range txns {
-		if t.CategoryID == nil {
+		if needsWork(t) {
 			ids = append(ids, t.ID)
 		}
 	}
@@ -208,41 +218,67 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 	if err != nil {
 		return rep, err
 	}
+
+	// Never touch a category or period that is already set: the refreshed
+	// snapshot says which half of the work each transaction still needs.
+	periods, _ := s.provider.(PeriodProvider)
+	var needCategory, needPeriod []models.Transaction
+	for _, t := range txns {
+		if t.CategoryID == nil {
+			needCategory = append(needCategory, t)
+		}
+		if periods != nil && t.PeriodSource == "" {
+			needPeriod = append(needPeriod, t)
+		}
+	}
+	rep.Total, rep.Periods = len(needCategory), len(needPeriod)
 	done := 0
 	progress := func() {
 		if onProgress != nil {
-			onProgress(Progress{Done: done, Total: rep.Total})
+			onProgress(Progress{Done: done, Total: rep.Total + rep.Periods})
 		}
 	}
-
-	// Never touch transactions that already have a category.
-	var pending []models.Transaction
-	for _, t := range txns {
-		if t.CategoryID == nil {
-			pending = append(pending, t)
-		}
-	}
-	txns = pending
-	rep.Total = len(txns)
 	progress() // publish the denominator before the first slow call
-	if len(txns) == 0 {
-		return rep, nil
+
+	// Categories first, so the period pass can use the ones just assigned.
+	assigned := map[int64]string{}
+	if len(needCategory) > 0 {
+		if err := s.assignCategories(ctx, cancel, options, needCategory, &rep, &done, progress, assigned); err != nil {
+			return rep, err
+		}
 	}
+	if len(needPeriod) > 0 {
+		if err := s.assignPeriods(ctx, cancel, options, periods, needPeriod, &rep, &done, progress, assigned); err != nil {
+			return rep, err
+		}
+	}
+	return rep, ctx.Err()
+}
+
+// needsWork reports whether a run has anything left to decide for t.
+func needsWork(t models.Transaction) bool { return t.CategoryID == nil || t.PeriodSource == "" }
+
+// assignCategories applies rules, then the provider, to uncategorized
+// transactions, recording each assigned category's name in assigned.
+func (s *Service) assignCategories(ctx context.Context, cancel context.CancelFunc, options RunConfig, txns []models.Transaction,
+	rep *Report, done *int, progress func(), assigned map[int64]string) error {
 	if tracker, ok := s.store.(interface{ BeginCategorization(context.Context) error }); ok {
 		if err := tracker.BeginCategorization(ctx); err != nil {
-			return rep, err
+			return err
 		}
 	}
 
 	cats, err := s.store.ListCategories(ctx)
 	if err != nil {
-		return rep, err
+		return err
 	}
 	validName := map[string]int64{}
+	nameByID := map[int64]string{}
 	var defs []CategoryDef
 	fallback := int64(0)
 	for _, c := range cats {
 		validName[strings.ToLower(c.Name)] = c.ID
+		nameByID[c.ID] = c.Name
 		if strings.EqualFold(c.Name, "General") {
 			fallback = c.ID
 		}
@@ -255,14 +291,14 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 
 	rules, err := s.store.ListRules(ctx)
 	if err != nil {
-		return rep, err
+		return err
 	}
 
 	// Pass 1: substring rules.
 	var remaining []models.Transaction
 	for _, t := range txns {
 		if err := ctx.Err(); err != nil {
-			return rep, err
+			return err
 		}
 		matched := false
 		lower := strings.ToLower(t.Description)
@@ -270,10 +306,11 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 			if r.Pattern != "" && strings.Contains(lower, strings.ToLower(r.Pattern)) {
 				cid := r.CategoryID
 				if err := s.store.SetUncategorizedCategory(ctx, t.ID, &cid); err != nil {
-					return rep, err
+					return err
 				}
+				assigned[t.ID] = nameByID[cid]
 				rep.ByRules++
-				done++
+				*done++
 				matched = true
 				break
 			}
@@ -284,40 +321,143 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 	}
 	progress()
 
-	// Provider calls run concurrently; only this goroutine applies results and
-	// publishes progress. The shared run lock prevents duplicate queue claims.
+	// Pass 2: the provider.
+	return runBatches(ctx, cancel, options, remaining,
+		func(ctx context.Context, batch []models.Transaction) ([]string, error) {
+			items := make([]Item, len(batch))
+			for i, t := range batch {
+				items[i] = Item{Desc: t.Description, Amount: t.BaseAmount}
+			}
+			return s.provider.Classify(ctx, items, defs)
+		},
+		func(batch []models.Transaction, names []string, err error) error {
+			if err != nil {
+				rep.Unresolved += len(batch)
+				*done += len(batch)
+				progress()
+				return nil
+			}
+			for j, t := range batch {
+				name := ""
+				if j < len(names) {
+					name = strings.TrimSpace(names[j])
+				}
+				cid, ok := validName[strings.ToLower(name)]
+				if !ok {
+					if fallback == 0 {
+						rep.Unresolved++
+						continue
+					}
+					cid = fallback
+				}
+				c := cid
+				if err := s.store.SetUncategorizedCategory(ctx, t.ID, &c); err != nil {
+					return err
+				}
+				assigned[t.ID] = nameByID[cid]
+				rep.ByAI++
+			}
+			*done += len(batch)
+			progress()
+			return nil
+		})
+}
+
+// assignPeriods asks the provider which month, quarter or year each
+// transaction counts towards. An answer outside the vocabulary falls back to
+// the transaction's own month, which is also what nearly every answer will
+// be; either way the period counts as decided and leaves the queue.
+func (s *Service) assignPeriods(ctx context.Context, cancel context.CancelFunc, options RunConfig, periods PeriodProvider,
+	txns []models.Transaction, rep *Report, done *int, progress func(), assigned map[int64]string) error {
+	store, ok := s.store.(periodStore)
+	if !ok {
+		return nil
+	}
+	return runBatches(ctx, cancel, options, txns,
+		func(ctx context.Context, batch []models.Transaction) ([]string, error) {
+			items := make([]PeriodItem, len(batch))
+			for i, t := range batch {
+				category := t.CategoryName
+				if name, ok := assigned[t.ID]; ok {
+					category = name
+				}
+				items[i] = PeriodItem{Date: t.Date, Desc: t.Description, Amount: t.BaseAmount, Category: category}
+			}
+			return periods.ClassifyPeriods(ctx, items)
+		},
+		func(batch []models.Transaction, labels []string, err error) error {
+			if err != nil {
+				rep.PeriodsUnresolved += len(batch)
+				*done += len(batch)
+				progress()
+				return nil
+			}
+			for j, t := range batch {
+				label := ""
+				if j < len(labels) {
+					label = labels[j]
+				}
+				start, end, ok := PeriodWindow(t.Date, label)
+				if !ok {
+					start, end, _ = PeriodWindow(t.Date, "month")
+				}
+				if err := store.SetUndecidedPeriod(ctx, t.ID, start, end); err != nil {
+					return err
+				}
+				rep.PeriodsAssigned++
+				if own, _, _ := PeriodWindow(t.Date, "month"); !start.Equal(own) || !end.Equal(own) {
+					rep.PeriodsMoved++
+				}
+			}
+			*done += len(batch)
+			progress()
+			return nil
+		})
+}
+
+// periodStore is the store half of period suggestions. It is optional so
+// category-only test stores need not implement it.
+type periodStore interface {
+	SetUndecidedPeriod(ctx context.Context, id int64, start, end time.Time) error
+}
+
+// runBatches sends txns to classify in batches of options.BatchSize, with up
+// to options.Concurrency calls in flight, and hands each answer to apply. apply
+// runs on the calling goroutine only, so it may update counters and publish
+// progress freely. A failed call reaches apply with its error, except failures
+// no later call can recover from (a missing or rejected key, changed settings),
+// which stop the run, as does an error returned by apply.
+func runBatches(ctx context.Context, cancel context.CancelFunc, options RunConfig, txns []models.Transaction,
+	classify func(context.Context, []models.Transaction) ([]string, error),
+	apply func(batch []models.Transaction, answers []string, err error) error) error {
 	type response struct {
 		batch   []models.Transaction
-		names   []string
+		answers []string
 		err     error
 		applied chan struct{}
 	}
 	jobs := make(chan []models.Transaction)
 	results := make(chan response)
 	var workers sync.WaitGroup
-	for n := 0; n < min(options.Concurrency, (len(remaining)+options.BatchSize-1)/options.BatchSize); n++ {
+	for n := 0; n < min(options.Concurrency, (len(txns)+options.BatchSize-1)/options.BatchSize); n++ {
 		workers.Add(1)
 		go func() {
 			defer workers.Done()
 			for batch := range jobs {
-				items := make([]Item, len(batch))
-				for i, t := range batch {
-					items[i] = Item{Desc: t.Description, Amount: t.BaseAmount}
-				}
-				names, err := s.provider.Classify(ctx, items, defs)
+				answers, err := classify(ctx, batch)
 				applied := make(chan struct{})
-				results <- response{batch, names, err, applied}
+				results <- response{batch, answers, err, applied}
 				<-applied
 			}
 		}()
 	}
 	go func() {
 		defer close(jobs)
-		for i := 0; i < len(remaining); i += options.BatchSize {
+		for i := 0; i < len(txns); i += options.BatchSize {
 			select {
 			case <-ctx.Done():
 				return
-			case jobs <- remaining[i:min(i+options.BatchSize, len(remaining))]:
+			case jobs <- txns[i:min(i+options.BatchSize, len(txns))]:
 			}
 		}
 	}()
@@ -339,43 +479,14 @@ func (s *Service) categorizeWithProgress(ctx context.Context, txns []models.Tran
 				cancel()
 				return
 			}
-			if result.err != nil {
-				rep.Unresolved += len(result.batch)
-				done += len(result.batch)
-				progress()
-				return
+			if err := apply(result.batch, result.answers, result.err); err != nil {
+				runErr = err
+				cancel()
 			}
-			for j, t := range result.batch {
-				name := ""
-				if j < len(result.names) {
-					name = strings.TrimSpace(result.names[j])
-				}
-				cid, ok := validName[strings.ToLower(name)]
-				if !ok {
-					if fallback == 0 {
-						rep.Unresolved++
-						continue
-					}
-					cid = fallback
-				}
-				c := cid
-				if err := s.store.SetUncategorizedCategory(ctx, t.ID, &c); err != nil {
-					runErr = err
-					cancel()
-					break
-				}
-				rep.ByAI++
-			}
-			done += len(result.batch)
-			progress()
 		}()
 	}
 	if runErr != nil {
-		return rep, runErr
+		return runErr
 	}
-	if ctx.Err() != nil {
-		return rep, ctx.Err()
-	}
-
-	return rep, nil
+	return ctx.Err()
 }

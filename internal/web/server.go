@@ -60,7 +60,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /transactions/categorize/dismiss", s.handleCategorizeDismiss)
 	mux.HandleFunc("POST /transactions/{id}/categorize", s.handleCategorizeOne)
 	mux.HandleFunc("POST /transactions/{id}/category", s.handleSetCategory)
-	mux.HandleFunc("POST /transactions/{id}/months", s.handleSetMonths)
+	mux.HandleFunc("POST /transactions/{id}/period", s.handleSetPeriod)
 	mux.HandleFunc("POST /transactions/{id}/note", s.handleSetNote)
 	mux.HandleFunc("POST /transactions/{id}/delete", s.handleDeleteTransaction)
 

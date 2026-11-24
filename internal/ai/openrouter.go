@@ -53,6 +53,22 @@ func (o *OpenRouter) ClassifyWithUsage(ctx context.Context, items []Item, catego
 	if err != nil {
 		return nil, usage, fmt.Errorf("openrouter: prompt: %w", err)
 	}
+	return o.complete(ctx, prompt, len(items), "categories")
+}
+
+// ClassifyPeriods asks for one relative period label per item.
+func (o *OpenRouter) ClassifyPeriods(ctx context.Context, items []PeriodItem) ([]string, error) {
+	if o.apiKey == "" || o.model == "" {
+		return nil, fmt.Errorf("openrouter: key and model are required")
+	}
+	labels, _, err := o.complete(ctx, RenderPeriodPrompt(items), len(items), "periods")
+	return labels, err
+}
+
+// complete sends one prompt and parses the answer as a JSON array of exactly n
+// strings; what names the strings for error messages.
+func (o *OpenRouter) complete(ctx context.Context, prompt string, n int, what string) ([]string, *Usage, error) {
+	var usage *Usage
 	payload := map[string]any{"model": o.model, "stream": false, "messages": []map[string]string{{"role": "user", "content": prompt}}}
 	if o.routing != nil {
 		payload["provider"] = o.routing
@@ -134,10 +150,10 @@ func (o *OpenRouter) ClassifyWithUsage(ctx context.Context, items []Item, catego
 	value = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(value, "```json"), "```"), "```"))
 	var names []string
 	if err := json.Unmarshal([]byte(value), &names); err != nil {
-		return nil, usage, fmt.Errorf("openrouter: could not parse JSON category array")
+		return nil, usage, fmt.Errorf("openrouter: could not parse JSON %s array", strings.TrimSuffix(what, "s"))
 	}
-	if len(names) != len(items) {
-		return nil, usage, fmt.Errorf("openrouter: expected %d categories, got %d", len(items), len(names))
+	if len(names) != n {
+		return nil, usage, fmt.Errorf("openrouter: expected %d %s, got %d", n, what, len(names))
 	}
 	return names, usage, nil
 }

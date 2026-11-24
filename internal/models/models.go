@@ -54,6 +54,7 @@ type Transaction struct {
 	ExcludeFromCalculations bool   // joined from the category
 	StartMonth              time.Time
 	EndMonth                time.Time
+	PeriodSource            string // "user", "ai", or "" while undecided
 	ExternalHash            string
 	Source                  string
 	Note                    string
@@ -76,6 +77,109 @@ func (t Transaction) CatID() int64 {
 
 // Amortized reports whether the transaction spans more than one month.
 func (t Transaction) Amortized() bool { return t.MonthSpan() > 1 }
+
+// PeriodKind classifies the amortization window as a single "month", a
+// calendar "quarter" or a calendar "year". Windows set before assignment was
+// limited to those three shapes report "".
+func (t Transaction) PeriodKind() string { return periodKind(t.StartMonth, t.EndMonth) }
+
+// PeriodValue renders the window in the form ParseAssignment accepts
+// ("2026-03", "2026-Q1", "2026"), or "" for a legacy arbitrary range.
+func (t Transaction) PeriodValue() string {
+	s := t.StartMonth
+	switch t.PeriodKind() {
+	case PeriodMonth:
+		return fmt.Sprintf("%d-%02d", s.Year(), int(s.Month()))
+	case PeriodQuarter:
+		return fmt.Sprintf("%d-Q%d", s.Year(), quarterOf(s))
+	case PeriodYear:
+		return strconv.Itoa(s.Year())
+	}
+	return ""
+}
+
+// PeriodLabel names the window for display: "Mar 2026", "Q1 2026", "2026", or
+// "Mar 2026 – Aug 2026" for a legacy arbitrary range.
+func (t Transaction) PeriodLabel() string {
+	s, e := t.StartMonth, t.EndMonth
+	switch t.PeriodKind() {
+	case PeriodMonth:
+		return fmt.Sprintf("%s %d", MonthName(int(s.Month())), s.Year())
+	case PeriodQuarter:
+		return fmt.Sprintf("Q%d %d", quarterOf(s), s.Year())
+	case PeriodYear:
+		return strconv.Itoa(s.Year())
+	}
+	return fmt.Sprintf("%s %d – %s %d", MonthName(int(s.Month())), s.Year(), MonthName(int(e.Month())), e.Year())
+}
+
+// InOwnMonth reports whether the transaction still counts towards the month it
+// occurred in, i.e. its period has not been changed.
+func (t Transaction) InOwnMonth() bool {
+	return t.PeriodKind() == PeriodMonth && monthIndex(t.StartMonth) == monthIndex(t.Date)
+}
+
+// Period kinds a transaction can be assigned to.
+const (
+	PeriodMonth   = "month"
+	PeriodQuarter = "quarter"
+	PeriodYear    = "year"
+)
+
+func quarterOf(t time.Time) int { return (int(t.Month())-1)/3 + 1 }
+
+func periodKind(start, end time.Time) string {
+	span := monthIndex(end) - monthIndex(start) + 1
+	switch {
+	case span == 1:
+		return PeriodMonth
+	case span == 3 && (int(start.Month())-1)%3 == 0:
+		return PeriodQuarter
+	case span == 12 && start.Month() == time.January:
+		return PeriodYear
+	}
+	return ""
+}
+
+// ParseAssignment parses a period in the form "2026-03" (month), "2026-Q1"
+// (quarter) or "2026" (year) into its inclusive first-of-month bounds.
+func ParseAssignment(v string) (start, end time.Time, ok bool) {
+	var year, n int
+	switch {
+	case len(v) == 7 && v[4] == '-' && (v[5] == 'Q' || v[5] == 'q'):
+		if !parseDigits(v[:4], &year) || !parseDigits(v[6:], &n) || n < 1 || n > 4 {
+			return
+		}
+		start = time.Date(year, time.Month(3*n-2), 1, 0, 0, 0, 0, time.UTC)
+		return start, start.AddDate(0, 2, 0), true
+	case len(v) == 7 && v[4] == '-':
+		if !parseDigits(v[:4], &year) || !parseDigits(v[5:], &n) || n < 1 || n > 12 {
+			return
+		}
+		start = time.Date(year, time.Month(n), 1, 0, 0, 0, 0, time.UTC)
+		return start, start, true
+	case len(v) == 4:
+		if !parseDigits(v, &year) {
+			return
+		}
+		return time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(year, time.December, 1, 0, 0, 0, 0, time.UTC), true
+	}
+	return
+}
+
+// parseDigits parses a positive all-digit string; strconv.Atoi alone would
+// also accept a sign.
+func parseDigits(s string, out *int) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	n, err := strconv.Atoi(s)
+	*out = n
+	return err == nil && n >= 1
+}
 
 // AllocatedFor returns the portion of BaseAmount that falls within the inclusive
 // [start,end] month window — the per-period share used by the amortizing reports.

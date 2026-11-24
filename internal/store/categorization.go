@@ -7,11 +7,15 @@ import (
 	"durooma/internal/models"
 )
 
+// unclassifiedSQL matches transactions the categorizer still has work on: a
+// missing category, an undecided period, or both.
+const unclassifiedSQL = "(t.category_id IS NULL OR t.period_source IS NULL)"
+
 // DueCategorization returns a small page, oldest eligible work first. A failed
 // item is delayed independently, so it cannot starve newly imported work.
 func (s *Store) DueCategorization(ctx context.Context, limit int) ([]models.Transaction, error) {
 	rows, err := s.pool.Query(ctx, txnSelect+`
-        WHERE t.category_id IS NULL AND t.categorize_after <= now()
+        WHERE `+unclassifiedSQL+` AND t.categorize_after <= now()
         ORDER BY t.categorize_after, t.id LIMIT $1`, limit)
 	if err != nil {
 		return nil, err
@@ -34,13 +38,13 @@ func (s *Store) DeferCategorization(ctx context.Context, ids []int64) error {
 	_, err := s.pool.Exec(ctx, `UPDATE transactions
         SET categorize_after = now() + LEAST(86400, 300 * power(2, LEAST(categorize_attempts, 9))) * interval '1 second',
             categorize_attempts = LEAST(categorize_attempts + 1, 10)
-        WHERE id = ANY($1) AND category_id IS NULL`, ids)
+        WHERE id = ANY($1) AND (category_id IS NULL OR period_source IS NULL)`, ids)
 	return err
 }
 
 // PendingTransactions refreshes a queued snapshot after waiting for another run.
 func (s *Store) PendingTransactions(ctx context.Context, ids []int64) ([]models.Transaction, error) {
-	rows, err := s.pool.Query(ctx, txnSelect+` WHERE t.id = ANY($1) AND t.category_id IS NULL ORDER BY t.id`, ids)
+	rows, err := s.pool.Query(ctx, txnSelect+` WHERE t.id = ANY($1) AND `+unclassifiedSQL+` ORDER BY t.id`, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +64,15 @@ func (s *Store) PendingTransactions(ctx context.Context, ids []int64) ([]models.
 func (s *Store) SetUncategorizedCategory(ctx context.Context, id int64, categoryID *int64) error {
 	_, err := s.pool.Exec(ctx, `UPDATE transactions SET category_id = $2
         WHERE id = $1 AND category_id IS NULL`, id, categoryID)
+	return err
+}
+
+// SetUndecidedPeriod records a suggested amortization window. Like
+// SetUncategorizedCategory it only fills a gap, so a period the user picked
+// during the API call is never overwritten.
+func (s *Store) SetUndecidedPeriod(ctx context.Context, id int64, start, end time.Time) error {
+	_, err := s.pool.Exec(ctx, `UPDATE transactions SET start_month = $2, end_month = $3, period_source = 'ai'
+        WHERE id = $1 AND period_source IS NULL`, id, firstOfMonth(start), firstOfMonth(end))
 	return err
 }
 

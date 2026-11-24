@@ -43,6 +43,10 @@ func TestCategorizationQueueRetryAndManualEdit(t *testing.T) {
 	if _, err := st.InsertTransactions(ctx, txns); err != nil {
 		t.Fatal(err)
 	}
+	// This test is about categories alone; periods have their own queue test.
+	if _, err := pool.Exec(ctx, `UPDATE transactions SET period_source = 'user'`); err != nil {
+		t.Fatal(err)
+	}
 	checkCoverage(3, 0)
 	pending, err := st.DueCategorization(ctx, 2)
 	if err != nil || len(pending) != 2 {
@@ -96,6 +100,67 @@ func TestCategorizationQueueRetryAndManualEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 	checkCoverage(3, 2)
+}
+
+func TestPeriodQueueAndManualEdit(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	st := New(pool)
+	account, err := st.CreateAccount(ctx, "period queue", "account", "CHF")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cats, err := st.ListCategories(ctx)
+	if err != nil || len(cats) == 0 {
+		t.Fatalf("categories: %v", err)
+	}
+	cat := cats[0].ID
+	var txns []models.Transaction
+	for i := 0; i < 2; i++ {
+		txns = append(txns, models.Transaction{AccountID: account, Date: mon(2026, time.September),
+			StartMonth: mon(2026, time.September), EndMonth: mon(2026, time.September), Description: "premium",
+			Currency: "CHF", BaseCurrency: "CHF", ExternalHash: fmt.Sprintf("period-%d", i), CategoryID: &cat})
+	}
+	if _, err := st.InsertTransactions(ctx, txns); err != nil {
+		t.Fatal(err)
+	}
+	// Categorized but with an undecided period: still work for the queue.
+	due, err := st.DueCategorization(ctx, 10)
+	if err != nil || len(due) != 2 || due[0].PeriodSource != "" {
+		t.Fatalf("undecided periods not queued: %+v %v", due, err)
+	}
+	ids := []int64{due[0].ID, due[1].ID}
+
+	// A hand-picked period survives a suggestion that arrives later.
+	if err := st.UpdateTransactionMonths(ctx, ids[0], mon(2026, time.July), mon(2026, time.September)); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range ids {
+		if err := st.SetUndecidedPeriod(ctx, id, mon(2026, time.January), mon(2026, time.December)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	manual, err := st.GetTransaction(ctx, ids[0])
+	if err != nil || manual.PeriodSource != "user" || manual.PeriodValue() != "2026-Q3" {
+		t.Fatalf("manual period overwritten: %+v %v", manual, err)
+	}
+	suggested, err := st.GetTransaction(ctx, ids[1])
+	if err != nil || suggested.PeriodSource != "ai" || suggested.PeriodValue() != "2026" {
+		t.Fatalf("suggestion not stored: %+v %v", suggested, err)
+	}
+	if due, err := st.DueCategorization(ctx, 10); err != nil || len(due) != 0 {
+		t.Fatalf("decided rows still queued: %+v %v", due, err)
+	}
+	// Both rows are decided and both moved: one to Q3, one to the whole year.
+	coverage, err := st.CategorizationCoverage(ctx)
+	if err != nil || coverage.PeriodsDecided != 2 || coverage.PeriodsMoved != 2 || coverage.PeriodsRemaining() != 0 {
+		t.Fatalf("period coverage = %+v, err = %v", coverage, err)
+	}
+	undecided, err := st.CountTransactions(ctx, TxnFilter{UndecidedPeriod: true})
+	if err != nil || undecided != 0 {
+		t.Fatalf("undecided filter = %d, %v", undecided, err)
+	}
 }
 
 func TestSharedRequestBudgetPersistsAndSerializes(t *testing.T) {

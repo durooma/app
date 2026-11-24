@@ -16,14 +16,15 @@ const pageSize = 200
 // query/form values.
 func txnFilterFromRequest(r *http.Request) store.TxnFilter {
 	f := store.TxnFilter{
-		AccountID:     int64(intParam(r, "account_id", 0)),
-		InstitutionID: int64(intParam(r, "institution_id", 0)),
-		CategoryID:    int64(intParam(r, "category_id", 0)),
-		Uncategorized: r.FormValue("uncategorized") == "1",
-		IncludedOnly:  r.FormValue("included_only") == "1",
-		Search:        r.FormValue("q"),
-		Limit:         pageSize,
-		Offset:        (intParam(r, "page", 1) - 1) * pageSize,
+		AccountID:       int64(intParam(r, "account_id", 0)),
+		InstitutionID:   int64(intParam(r, "institution_id", 0)),
+		CategoryID:      int64(intParam(r, "category_id", 0)),
+		Uncategorized:   r.FormValue("uncategorized") == "1",
+		UndecidedPeriod: r.FormValue("undecided_period") == "1",
+		IncludedOnly:    r.FormValue("included_only") == "1",
+		Search:          r.FormValue("q"),
+		Limit:           pageSize,
+		Offset:          (intParam(r, "page", 1) - 1) * pageSize,
 	}
 	if v := r.FormValue("from"); v != "" {
 		if t, err := time.Parse("2006-01-02", v); err == nil {
@@ -43,21 +44,12 @@ func txnFilterFromRequest(r *http.Request) store.TxnFilter {
 	return f
 }
 
-// parsePeriod interprets a drill-down period param as either a single month
-// ("2006-01") or a whole year ("2006"), returning the inclusive first-of-month
-// bounds. A blank/invalid value yields zero times (no period filter).
+// parsePeriod interprets a drill-down period param as a month ("2006-01"), a
+// quarter ("2006-Q1") or a year ("2006"), returning the inclusive
+// first-of-month bounds. A blank/invalid value yields zero times (no period
+// filter).
 func parsePeriod(v string) (start, end time.Time) {
-	if v == "" {
-		return
-	}
-	if t, err := time.Parse("2006-01", v); err == nil {
-		s := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
-		return s, s
-	}
-	if t, err := time.Parse("2006", v); err == nil {
-		return time.Date(t.Year(), 1, 1, 0, 0, 0, 0, time.UTC),
-			time.Date(t.Year(), 12, 1, 0, 0, 0, 0, time.UTC)
-	}
+	start, end, _ = models.ParseAssignment(v)
 	return
 }
 
@@ -101,16 +93,17 @@ func (s *Server) transactionsData(r *http.Request, f store.TxnFilter) (map[strin
 	data["PreviousPageURL"] = pageURL(intParam(r, "page", 1) - 1)
 	data["NextPageURL"] = pageURL(intParam(r, "page", 1) + 1)
 	data["Filter"] = map[string]any{
-		"account_id":     f.AccountID,
-		"institution_id": f.InstitutionID,
-		"category_id":    f.CategoryID,
-		"uncategorized":  f.Uncategorized,
-		"included_only":  f.IncludedOnly,
-		"q":              f.Search,
-		"from":           r.FormValue("from"),
-		"to":             r.FormValue("to"),
-		"period":         r.FormValue("period"),
-		"sign":           r.FormValue("sign"),
+		"account_id":       f.AccountID,
+		"institution_id":   f.InstitutionID,
+		"category_id":      f.CategoryID,
+		"uncategorized":    f.Uncategorized,
+		"undecided_period": f.UndecidedPeriod,
+		"included_only":    f.IncludedOnly,
+		"q":                f.Search,
+		"from":             r.FormValue("from"),
+		"to":               r.FormValue("to"),
+		"period":           r.FormValue("period"),
+		"sign":             r.FormValue("sign"),
 	}
 
 	// When drilling into a period, expose each transaction's amortized share of
@@ -145,22 +138,22 @@ func (s *Server) handleTransactions(w http.ResponseWriter, r *http.Request) {
 // maxCategorizeRun bounds how many transactions one run pulls into memory. It
 // is applied as a query limit rather than by discarding rows already loaded, so
 // the bound actually saves the memory it is there to save on a small host.
-// Anything beyond it is reported as still uncategorized, not silently dropped.
+// Anything beyond it is reported as still to do, not silently dropped.
 const maxCategorizeRun = 5000
 
 // handleCategorizeAll starts a background run over the uncategorized
 // transactions matching the current filter and returns the progress bar. The
 // run is a provider round trip per batch, so it outlives this request rather
 // than holding it open; the bar polls handleCategorizeStatus for the outcome.
-// Existing categorizations are left untouched by the AI service.
+// Existing categories and periods are left untouched by the AI service.
 func (s *Server) handleCategorizeAll(w http.ResponseWriter, r *http.Request) {
 	if !s.requireCategorizationKey(w, r) {
 		return
 	}
 	// Categorize across the whole matching set (not just the current page) but
-	// only the still-uncategorized ones.
+	// only the ones still missing a category or a decided period.
 	catFilter := txnFilterFromRequest(r)
-	catFilter.Uncategorized = true
+	catFilter.Unclassified = true
 	catFilter.Limit = maxCategorizeRun
 	catFilter.Offset = 0
 
@@ -250,20 +243,19 @@ func (s *Server) handleSetCategory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *Server) handleSetMonths(w http.ResponseWriter, r *http.Request) {
+// handleSetPeriod assigns a transaction to one month, quarter or year, given
+// as "2006-01", "2006-Q1" or "2006". Its amount is spread evenly over the
+// months of that period in every report.
+func (s *Server) handleSetPeriod(w http.ResponseWriter, r *http.Request) {
 	id, err := int64PathValue(r, "id")
 	if err != nil {
 		http.Error(w, "bad id", http.StatusBadRequest)
 		return
 	}
-	start, err1 := time.Parse("2006-01", r.FormValue("start_month"))
-	end, err2 := time.Parse("2006-01", r.FormValue("end_month"))
-	if err1 != nil || err2 != nil {
-		http.Error(w, "invalid month (expected YYYY-MM)", http.StatusBadRequest)
+	start, end, ok := models.ParseAssignment(r.FormValue("period"))
+	if !ok {
+		http.Error(w, "invalid period (expected YYYY-MM, YYYY-Qn or YYYY)", http.StatusBadRequest)
 		return
-	}
-	if end.Before(start) {
-		start, end = end, start
 	}
 	if err := s.store.UpdateTransactionMonths(r.Context(), id, start, end); err != nil {
 		s.fail(w, err)

@@ -2,7 +2,7 @@
 
 A lean personal-finance app that unifies transactions across accounts,
 institutions and currencies, with a drill-down report from all time down to a
-single month, month-range amortization, CSV imports (UBS Switzerland & Charles
+single month, month/quarter/year amortization, CSV imports (UBS Switzerland & Charles
 Schwab) and AI-assisted categorization.
 
 Built to run comfortably on a **512 MB** DigitalOcean droplet or a home server:
@@ -26,10 +26,10 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
   the matching period, sign and category already filtered. Categories are split
   by sign rather than netted, so a refunded expense or a mixed uncategorized
   bucket shows on both sides and each table adds up to the headline total.
-- **Month-range assignment / amortization** — a transaction defaults to the month
-  it occurred, but can be reassigned to another month or spread across a range
-  (quarter, year, …). Amortized amounts are divided evenly across the months in
-  every report.
+- **Period assignment / amortization** — a transaction defaults to the month it
+  occurred, but one button per row reassigns it to another month or spreads it
+  over a calendar quarter or year. Amortized amounts are divided evenly across
+  the months in every report.
 - **Multi-currency** — each account has its own currency; amounts are converted to
   your base currency (default `CHF`) using historical ECB rates
   ([frankfurter.app](https://frankfurter.app)), cached in the database.
@@ -38,6 +38,10 @@ PostgreSQL. Two runtime dependencies, no Node build step, no ORM.
   date/description/amount hash.
 - **Auto-categorization** — deterministic substring rules first, then a pluggable
   user-configured OpenRouter model for the rest (DeepSeek V4.1 Flash by default).
+  The same model then suggests each transaction's period (its own month in most
+  cases, but e.g. the whole year for an annual premium, or next year for one
+  paid in advance). Suggestions never override a category or period you set by
+  hand, and suggested periods are marked with a sparkle.
   Your own API key is required. An optional persistent background
   worker picks up uncategorized transactions with paced requests and retries.
   Enable it in **Settings**; it defaults to off.

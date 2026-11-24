@@ -68,13 +68,16 @@
 				{{- if .Err}}Categorization failed: {{.Err}}
 				{{- else if .Aborted}}Aborted — {{.Done}} of {{.Total}} processed
 					({{.Report.ByRules}} by rules, {{.Report.ByAI}} by AI). Categories written so far were kept.
-				{{- else if eq .Report.Total 0}}Nothing to categorize.
-				{{- else}}Categorized {{.Report.Total}} transactions with <strong>{{.Report.Provider}}</strong> —
-					{{.Report.ByRules}} by rules, {{.Report.ByAI}} by AI, {{.Report.Unresolved}} left unresolved.
+				{{- else if and (eq .Report.Total 0) (eq .Report.Periods 0)}}Nothing to categorize.
+				{{- else}}
+					{{- if .Report.Total}}Categorized {{.Report.Total}} transactions with <strong>{{.Report.Provider}}</strong> —
+						{{.Report.ByRules}} by rules, {{.Report.ByAI}} by AI, {{.Report.Unresolved}} left unresolved.{{end}}
+					{{- if .Report.Periods}} Periods decided for {{.Report.PeriodsAssigned}} of {{.Report.Periods}},
+						{{.Report.PeriodsMoved}} moved away from their own month{{if .Report.PeriodsUnresolved}}, {{.Report.PeriodsUnresolved}} left undecided{{end}}.{{end}}
 				{{- end}}
 				{{- /* Whatever the run did not get to — the query bound, plus anything
 				       it failed to resolve — so hitting the bound is never silent. */}}
-				{{- if .Remaining}} <strong>{{.Remaining}}</strong> still uncategorized; run again to continue.{{end}}
+				{{- if .Remaining}} <strong>{{.Remaining}}</strong> still missing a category or period; run again to continue.{{end}}
 			</span>
 			{{/* An empty href reloads the current URL, so the table below picks
 			     up the categories the run just wrote — no JS needed. */}}

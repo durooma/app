@@ -40,14 +40,14 @@ type catResult struct {
 }
 
 // catRun is everything a run needs: the work, the service to do it with, and a
-// way to ask what is still uncategorized once it ends.
+// way to ask what is still unclassified once it ends.
 type catRun struct {
 	svc  *ai.Service
 	txns []models.Transaction
 
 	// remaining reports how many transactions matching the run's filter are
-	// still uncategorized after it finishes — those left behind by the query
-	// bound, plus any the run failed to resolve. May be nil.
+	// still missing a category or period after it finishes — those left
+	// behind by the query bound, plus any the run failed to resolve. May be nil.
 	remaining func(ctx context.Context) (int, error)
 }
 

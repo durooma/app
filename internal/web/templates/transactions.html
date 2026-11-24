@@ -13,19 +13,20 @@
 		<input type="hidden" name="account_id" value="{{index $f "account_id"}}">
 		<input type="hidden" name="category_id" value="{{index $f "category_id"}}">
 		<input type="hidden" name="uncategorized" value="{{if index $f "uncategorized"}}1{{end}}">
+		<input type="hidden" name="undecided_period" value="{{if index $f "undecided_period"}}1{{end}}">
 		<input type="hidden" name="included_only" value="{{if index $f "included_only"}}1{{end}}">
 		<input type="hidden" name="from" value="{{index $f "from"}}">
 		<input type="hidden" name="to" value="{{index $f "to"}}">
 		<input type="hidden" name="period" value="{{index $f "period"}}">
 		<input type="hidden" name="sign" value="{{index $f "sign"}}">
 		<input type="hidden" name="q" value="{{index $f "q"}}">
-		<button type="submit" title="Auto-categorize every uncategorized transaction matching the current filter">{{template "icon" "sparkles"}} Categorize all</button>
+		<button type="submit" title="Suggest a category and period for every transaction matching the current filter that still lacks one">{{template "icon" "sparkles"}} Categorize all</button>
 	</form>
 	{{end}}
 </div>
 
 {{if .AutoCategorization}}
-<p class="muted">Uncategorized transactions are processed automatically in the background.
+<p class="muted">Uncategorized transactions, and those whose period is still undecided, are processed automatically in the background.
 You can keep browsing and reload to see new categories. Manual runs share the same request budget. <a href="/settings">Settings</a></p>
 {{else if .AIEnabled}}
 <p class="muted">To categorize transactions automatically, enable background categorization in <a href="/settings">Settings</a>.</p>
@@ -47,6 +48,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 		{{range .Categories}}<option value="{{.ID}}" {{if eq .ID (index $f "category_id")}}selected{{end}}>{{.Name}}</option>{{end}}
 	</select>
 	<label class="chk"><input type="checkbox" name="uncategorized" value="1" {{if index $f "uncategorized"}}checked{{end}}> Uncategorized</label>
+	<label class="chk"><input type="checkbox" name="undecided_period" value="1" {{if index $f "undecided_period"}}checked{{end}}> Period undecided</label>
 	<label class="chk"><input type="checkbox" name="included_only" value="1" {{if index $f "included_only"}}checked{{end}}> Included in calculations only</label>
 	<input aria-label="From date" type="date" name="from" value="{{index $f "from"}}">
 	<input aria-label="To date" type="date" name="to" value="{{index $f "to"}}">
@@ -63,7 +65,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 	<span class="chip">
 		Drilled in{{with index $f "period"}}: {{.}}{{end}}{{with index $f "sign"}} · {{.}}{{end}}
 		<a class="chip-x" title="Clear the period/income filter"
-			href="/transactions?account_id={{index $f "account_id"}}&institution_id={{index $f "institution_id"}}&category_id={{index $f "category_id"}}&uncategorized={{if index $f "uncategorized"}}1{{end}}&from={{index $f "from"}}&to={{index $f "to"}}&q={{index $f "q"}}">✕</a>
+			href="/transactions?account_id={{index $f "account_id"}}&institution_id={{index $f "institution_id"}}&category_id={{index $f "category_id"}}&uncategorized={{if index $f "uncategorized"}}1{{end}}&undecided_period={{if index $f "undecided_period"}}1{{end}}&from={{index $f "from"}}&to={{index $f "to"}}&q={{index $f "q"}}">✕</a>
 	</span>
 	<span class="muted">Amortized transactions show their full amount and the share allocated to this period.</span>
 </div>
@@ -78,7 +80,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 		<tr>
 			<th>Date</th><th>Account</th><th>Description</th>
 			<th class="num">Amount</th><th class="num">{{.BaseCurrency}}</th>
-			<th>Category</th><th>Month(s)</th><th><span class="sr-only">Actions</span></th>
+			<th>Category</th><th>Period</th><th><span class="sr-only">Actions</span></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -98,6 +100,7 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 	{{if gt .Page 1}}<a href="{{.PreviousPageURL}}">← Newer</a>{{end}}
 	{{if .HasMore}}<a href="{{.NextPageURL}}">Older →</a>{{end}}
 </div>
+<script src="/static/period-picker.js" defer></script>
 {{end}}
 
 {{define "txn-row"}}
@@ -121,12 +124,16 @@ You can keep browsing and reload to see new categories. Manual runs share the sa
 		{{end}}
 	</td>
 	<td class="nowrap">
-		<form method="post" action="/transactions/{{$tx.ID}}/months" class="months">
-			<input aria-label="Start month" type="month" name="start_month" value="{{monthval $tx.StartMonth}}">
-			<input aria-label="End month" type="month" name="end_month" value="{{monthval $tx.EndMonth}}">
-			<button type="submit" title="Assign to this month or range">✓</button>
-			{{if $tx.Amortized}}<span class="pill amort" title="Amortized over {{$tx.MonthSpan}} months">÷{{$tx.MonthSpan}}</span>{{end}}
-		</form>
+		{{/* One button per row; period-picker.js opens a shared month/quarter/year
+		     picker for it and posts the choice to /transactions/{id}/period. */}}
+		<button type="button" class="period-btn{{if not $tx.InOwnMonth}} moved{{end}}" aria-haspopup="dialog"
+			data-period-id="{{$tx.ID}}" data-period="{{$tx.PeriodValue}}" data-kind="{{$tx.PeriodKind}}"
+			data-start="{{monthval $tx.StartMonth}}" data-own="{{monthval $tx.Date}}"
+			title="{{if eq $tx.PeriodSource "ai"}}Suggested by AI. {{end}}{{if $tx.Amortized}}Spread evenly over {{$tx.MonthSpan}} months. {{end}}Choose the month, quarter or year this transaction counts towards">
+			{{- if and (eq $tx.PeriodSource "ai") (not $tx.InOwnMonth)}}{{template "icon" "sparkles"}}{{end -}}
+			{{- $tx.PeriodLabel -}}
+			{{- if $tx.Amortized}} <span class="pill amort">÷{{$tx.MonthSpan}}</span>{{end -}}
+		</button>
 	</td>
 	<td>
 		<button class="del" aria-label="Delete transaction" hx-post="/transactions/{{$tx.ID}}/delete"

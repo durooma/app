@@ -94,11 +94,21 @@
         {{else}}
         <p class="muted">All transactions have a category assigned.</p>
         {{end}}
+        <div class="coverage-summary">
+            <span><strong>{{.PeriodsDecided}}</strong> of <strong>{{.Total}}</strong> periods decided{{if .PeriodsMoved}} · <strong>{{.PeriodsMoved}}</strong> moved from their own month{{end}}</span>
+            <strong>{{printf "%.1f" .PeriodsPercent}}%</strong>
+        </div>
+        <progress value="{{.PeriodsDecided}}" max="{{.Total}}" aria-label="Transactions with a decided period">{{printf "%.1f" .PeriodsPercent}}%</progress>
+        {{if .PeriodsRemaining}}
+        <p class="muted"><a href="/transactions?undecided_period=1">{{.PeriodsRemaining}} still undecided</a></p>
+        {{else}}
+        <p class="muted">Every transaction has a decided period.</p>
+        {{end}}
         {{else}}
         <p class="muted">No transactions yet. Coverage will appear here once you <a href="/import">import transactions</a>.</p>
         {{end}}
     </div>
-    <p class="muted">Includes categories assigned manually, by rules, and by AI. Updates automatically every 5 seconds.</p>
+    <p class="muted">Includes categories assigned manually, by rules, and by AI, and periods picked by hand or suggested by AI. Updates automatically every 5 seconds.</p>
     {{if .Total}}
     {{if .CanReset}}
     <p class="muted">{{if .Background}}Background categorization is on.{{else}}Background categorization is off. Resetting will turn it on.{{end}}</p>

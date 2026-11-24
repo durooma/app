@@ -24,6 +24,11 @@ func TestCoverageEmptyPartialAndComplete(t *testing.T) {
 			"100.0%", "All transactions have a category assigned."}},
 		{"changed", store.CategorizationCoverage{Total: 120, Categorized: 120, CategoriesChanged: true}, []string{
 			"Categories have changed", "recommend resetting"}},
+		{"periods partial", store.CategorizationCoverage{Total: 120, Categorized: 120, PeriodsDecided: 30, PeriodsMoved: 4}, []string{
+			"<strong>30</strong> of <strong>120</strong> periods decided", "<strong>4</strong> moved from their own month",
+			"25.0%", `value="30" max="120"`, `href="/transactions?undecided_period=1">90 still undecided`}},
+		{"periods complete", store.CategorizationCoverage{Total: 120, Categorized: 120, PeriodsDecided: 120}, []string{
+			"Every transaction has a decided period."}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var html strings.Builder

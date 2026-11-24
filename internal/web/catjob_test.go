@@ -292,10 +292,10 @@ func TestRenderCatProgressStates(t *testing.T) {
 	// Hitting the query bound must be visible, not silent.
 	bounded := render(&catStatus{Done: 5000, Total: 5000, Percent: 100, Remaining: 300,
 		Report: ai.Report{Total: 5000, ByAI: 5000, Provider: "gemini"}})
-	if !strings.Contains(bounded, "<strong>300</strong> still uncategorized") {
+	if !strings.Contains(bounded, "<strong>300</strong> still missing a category or period") {
 		t.Errorf("a bounded run must report what it left behind:\n%s", bounded)
 	}
-	if strings.Contains(done, "still uncategorized") {
+	if strings.Contains(done, "still missing") {
 		t.Errorf("a run that finished the set should not claim a remainder:\n%s", done)
 	}
 

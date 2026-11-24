@@ -33,6 +33,18 @@ func NewUserProvider(st userProviderStore, userID string) *UserProvider {
 }
 func (p *UserProvider) Name() string { return "OpenRouter" }
 func (p *UserProvider) Classify(ctx context.Context, items []Item, defs []CategoryDef) ([]string, error) {
+	return p.request(ctx, func(ctx context.Context, o *OpenRouter) ([]string, error) { return o.Classify(ctx, items, defs) })
+}
+
+// ClassifyPeriods suggests periods under the same key, pacing and retries as
+// categorization; both draw from one request budget.
+func (p *UserProvider) ClassifyPeriods(ctx context.Context, items []PeriodItem) ([]string, error) {
+	return p.request(ctx, func(ctx context.Context, o *OpenRouter) ([]string, error) { return o.ClassifyPeriods(ctx, items) })
+}
+
+// request runs one paced model call with the user's current credentials,
+// retrying transient failures.
+func (p *UserProvider) request(ctx context.Context, call func(context.Context, *OpenRouter) ([]string, error)) ([]string, error) {
 	settings, err := p.store.AISettings(ctx, p.userID)
 	if err != nil {
 		return nil, errors.New("could not load categorization settings")
@@ -73,7 +85,7 @@ func (p *UserProvider) Classify(ctx context.Context, items []Item, defs []Catego
 		provider := NewOpenRouterWithRouting(key, settings.Model, "", &OpenRouterRouting{ZDR: true, DataCollection: "deny"})
 		provider.client = p.client
 		callCtx, cancel := context.WithTimeout(ctx, 120*time.Second)
-		names, err := provider.Classify(callCtx, items, defs)
+		names, err := call(callCtx, provider)
 		if callCtx.Err() != nil {
 			err = callCtx.Err()
 		}

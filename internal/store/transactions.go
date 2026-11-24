@@ -16,9 +16,14 @@ type TxnFilter struct {
 	InstitutionID int64
 	CategoryID    int64
 	Uncategorized bool
-	IncludedOnly  bool // report drill-downs omit categories excluded from calculations
-	From          time.Time
-	To            time.Time
+	// UndecidedPeriod matches transactions whose period nobody has chosen yet.
+	UndecidedPeriod bool
+	// Unclassified matches transactions still missing a category or a
+	// decided period: the work a categorization run picks up.
+	Unclassified bool
+	IncludedOnly bool // report drill-downs omit categories excluded from calculations
+	From         time.Time
+	To           time.Time
 	// PeriodStart/PeriodEnd select transactions whose amortization window overlaps
 	// the given inclusive month range (both first-of-month). This matches how the
 	// reports allocate amounts across months, so drilling into a report figure
@@ -45,7 +50,8 @@ const txnSelect = `
 	SELECT t.id, t.account_id, a.name, i.name, t.txn_date, t.description,
 	       t.amount, t.currency, t.base_amount, t.base_currency,
 	       t.category_id, COALESCE(c.name, ''), t.start_month, t.end_month,
-	       t.external_hash, t.source, t.note, COALESCE(c.exclude_from_calculations, false)` + txnFrom
+	       t.external_hash, t.source, t.note, COALESCE(c.exclude_from_calculations, false),
+	       COALESCE(t.period_source, '')` + txnFrom
 
 func scanTxn(rows interface {
 	Scan(...any) error
@@ -54,7 +60,7 @@ func scanTxn(rows interface {
 	err := rows.Scan(&t.ID, &t.AccountID, &t.AccountName, &t.Institution, &t.Date,
 		&t.Description, &t.Amount, &t.Currency, &t.BaseAmount, &t.BaseCurrency,
 		&t.CategoryID, &t.CategoryName, &t.StartMonth, &t.EndMonth,
-		&t.ExternalHash, &t.Source, &t.Note, &t.ExcludeFromCalculations)
+		&t.ExternalHash, &t.Source, &t.Note, &t.ExcludeFromCalculations, &t.PeriodSource)
 	return t, err
 }
 
@@ -76,6 +82,12 @@ func txnWhere(f TxnFilter) (where []string, args []any) {
 	}
 	if f.Uncategorized {
 		where = append(where, "t.category_id IS NULL")
+	}
+	if f.UndecidedPeriod {
+		where = append(where, "t.period_source IS NULL")
+	}
+	if f.Unclassified {
+		where = append(where, unclassifiedSQL)
 	}
 	if f.IncludedOnly {
 		where = append(where, includedCategorySQL)
@@ -217,9 +229,10 @@ func (s *Store) UpdateTransactionCategory(ctx context.Context, id int64, categor
 	return err
 }
 
-// UpdateTransactionMonths sets the amortization window for a transaction.
+// UpdateTransactionMonths sets the amortization window for a transaction by
+// hand. Marking it as the user's choice keeps the categorizer from revisiting it.
 func (s *Store) UpdateTransactionMonths(ctx context.Context, id int64, start, end time.Time) error {
-	_, err := s.pool.Exec(ctx, `UPDATE transactions SET start_month = $2, end_month = $3 WHERE id = $1`,
+	_, err := s.pool.Exec(ctx, `UPDATE transactions SET start_month = $2, end_month = $3, period_source = 'user' WHERE id = $1`,
 		id, firstOfMonth(start), firstOfMonth(end))
 	return err
 }
